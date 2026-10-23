@@ -79,6 +79,10 @@ export class TemporaryBlocklist {
 }
 
 export function getClientIp(socket: Socket): string {
+  const cfIp = socket.handshake.headers["cf-connecting-ip"];
+  if (typeof cfIp === "string" && cfIp.trim()) {
+    return cfIp.trim();
+  }
   const forwarded = socket.handshake.headers["x-forwarded-for"];
   if (typeof forwarded === "string") {
     return forwarded.split(",")[0].trim();
