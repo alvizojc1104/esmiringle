@@ -124,7 +124,7 @@ export const translations: Record<Language, Translations> = {
     modalSubTitle: "Pilia kung unsaon ka pag-ila sa chat.",
     maleLabel: "Lalaki",
     femaleLabel: "Babaye",
-    preferNotToSayLabel: "Dele lang",
+    preferNotToSayLabel: "Basta secret",
     communityNotesTitle: "Mga Pahimangno ug Kaluwasan",
     noteAge:
       "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmeringle.",
