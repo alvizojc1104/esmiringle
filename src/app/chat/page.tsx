@@ -106,7 +106,13 @@ export default function ChatPage() {
   if (!isClient || !profile) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-center">
+    <div
+      className={`w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 ${
+        status === "matched" && partner
+          ? "fixed inset-0 h-[100dvh] w-full overflow-hidden flex flex-col sm:relative sm:min-h-screen sm:justify-center sm:p-4"
+          : "min-h-screen flex flex-col justify-center p-4"
+      }`}
+    >
       {status === "matched" && partner ? (
         <ChatViewport
           userProfile={profile}

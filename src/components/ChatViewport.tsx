@@ -1,9 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChatMessage, PartnerProfile, UserProfile, GENDER_ALIASES } from "../types/chat";
+import {
+  ChatMessage,
+  PartnerProfile,
+  UserProfile,
+  GENDER_ALIASES,
+} from "../types/chat";
 import { Language, translations } from "../utils/i18n";
-import { Send, FastForward, Slash, ArrowRight, ArrowLeft, Globe, Sun, Moon } from "lucide-react";
+import {
+  Send,
+  FastForward,
+  Slash,
+  ArrowRight,
+  ArrowLeft,
+  Globe,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { sound } from "../utils/audio";
 
 interface ChatViewportProps {
@@ -93,9 +107,9 @@ export default function ChatViewport({
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] sm:h-[calc(100vh-4rem)] max-w-3xl mx-auto w-full sm:rounded-2xl bg-white dark:bg-slate-900 sm:border sm:border-slate-200 sm:dark:border-slate-800 sm:shadow-sm overflow-hidden transition-colors">
-      {/* Messenger-style Top Header */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm sticky top-0 z-30 shrink-0">
+    <div className="flex flex-col h-full sm:h-[calc(100vh-4rem)] max-w-3xl mx-auto w-full sm:rounded-2xl bg-white dark:bg-slate-900 sm:border sm:border-slate-200 sm:dark:border-slate-800 sm:shadow-sm overflow-hidden transition-colors">
+      {/* Messenger-style Top Header - Fixed & Pinned */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0 select-none">
         {/* Left: Back Button + Avatar + Alias */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button
@@ -111,7 +125,11 @@ export default function ChatViewport({
           </button>
 
           <span className="text-2xl select-none">
-            {partner.gender === "male" ? "👨" : partner.gender === "female" ? "👩" : "👤"}
+            {partner.gender === "male"
+              ? "👨"
+              : partner.gender === "female"
+                ? "👩"
+                : "👤"}
           </span>
 
           <div className="leading-tight">
@@ -132,11 +150,17 @@ export default function ChatViewport({
               onClick={onToggleLang}
               aria-label="Toggle language"
               className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition"
-              title={lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"}
+              title={
+                lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"
+              }
             >
               <Globe className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">{lang === "bisaya" ? "Bisaya" : "English"}</span>
-              <span className="sm:hidden">{lang === "bisaya" ? "BIS" : "EN"}</span>
+              <span className="hidden sm:inline">
+                {lang === "bisaya" ? "Bisaya" : "English"}
+              </span>
+              <span className="sm:hidden">
+                {lang === "bisaya" ? "BIS" : "EN"}
+              </span>
             </button>
           )}
 
@@ -146,14 +170,18 @@ export default function ChatViewport({
               aria-label="Toggle theme"
               className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDarkMode ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
           )}
         </div>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
+      {/* Messages Scroll Area - ONLY this element scrolls */}
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3.5">
         <div className="text-center my-2">
           <span className="inline-block px-3 py-1 rounded-full text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             {t.welcomeChat(partnerAlias, article)}
@@ -219,7 +247,9 @@ export default function ChatViewport({
                 {t.partnerDisconnected(partnerAlias)}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                {leftReason === "skipped" ? t.partnerSkipped(partnerAlias) : t.connectionEnded}
+                {leftReason === "skipped"
+                  ? t.partnerSkipped(partnerAlias)
+                  : t.connectionEnded}
               </p>
             </div>
             <button
@@ -236,7 +266,7 @@ export default function ChatViewport({
       </div>
 
       {/* Input bar - pinned cleanly at the bottom */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky bottom-0 z-20 shrink-0">
+      <div className="p-2.5 sm:p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-20 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <button
             type="button"
@@ -260,7 +290,11 @@ export default function ChatViewport({
             value={inputText}
             onChange={handleInputChange}
             disabled={isPartnerLeft}
-            placeholder={isPartnerLeft ? t.rematchPlaceholder(partnerAlias) : t.typePlaceholder}
+            placeholder={
+              isPartnerLeft
+                ? t.rematchPlaceholder(partnerAlias)
+                : t.typePlaceholder
+            }
             className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
           />
 
