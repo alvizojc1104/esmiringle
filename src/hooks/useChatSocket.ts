@@ -22,7 +22,8 @@ export function useChatSocket(profile: UserProfile | null) {
 
   // Initialize socket
   useEffect(() => {
-    const socket = io({
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
+    const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
       reconnectionAttempts: 5,
     });
