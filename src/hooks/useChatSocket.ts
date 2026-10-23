@@ -7,6 +7,7 @@ import {
   PartnerProfile,
   UserProfile,
   MatchStatus,
+  Gender,
 } from "../types/chat";
 import { sound } from "../utils/audio";
 
@@ -195,7 +196,7 @@ export function useChatSocket(initialProfile?: UserProfile | null) {
     };
   }, []);
 
-  const startSearching = useCallback(() => {
+  const startSearching = useCallback((profileOverride?: UserProfile | Gender) => {
     if (!socketRef.current) return;
     setPartner(null);
     setMessages([]);
@@ -203,9 +204,19 @@ export function useChatSocket(initialProfile?: UserProfile | null) {
     setLeftReason(null);
     setIsPartnerTyping(false);
     setStatus("searching");
-    const userProfile = initialProfile || {
-      id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    };
+    let userProfile: UserProfile;
+    if (typeof profileOverride === "string") {
+      userProfile = {
+        id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        gender: profileOverride,
+      };
+    } else if (profileOverride && typeof profileOverride === "object") {
+      userProfile = profileOverride;
+    } else {
+      userProfile = initialProfile || {
+        id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      };
+    }
     socketRef.current.emit("join-queue", userProfile);
   }, [initialProfile]);
 

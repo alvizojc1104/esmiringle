@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Language } from "../utils/i18n";
+import { Gender } from "../types/chat";
 import { useChatSocket } from "../hooks/useChatSocket";
 import ChatViewport from "../components/ChatViewport";
 import { sound } from "../utils/audio";
@@ -10,6 +11,7 @@ export default function HomePage() {
   const [isClient, setIsClient] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [lang, setLang] = useState<Language>("bisaya");
+  const [gender, setGender] = useState<Gender>("undisclosed");
 
   // Load preferences from sessionStorage
   useEffect(() => {
@@ -20,6 +22,11 @@ export default function HomePage() {
       setLang(savedLang);
     } else {
       setLang("bisaya");
+    }
+
+    const savedGender = sessionStorage.getItem("esmeringle_gender") as Gender | null;
+    if (savedGender === "male" || savedGender === "female" || savedGender === "undisclosed") {
+      setGender(savedGender);
     }
 
     const savedTheme = sessionStorage.getItem("esmeringle_theme");
@@ -49,6 +56,11 @@ export default function HomePage() {
     const nextLang: Language = lang === "bisaya" ? "en" : "bisaya";
     setLang(nextLang);
     sessionStorage.setItem("esmeringle_lang", nextLang);
+  };
+
+  const handleGenderChange = (selectedGender: Gender) => {
+    setGender(selectedGender);
+    sessionStorage.setItem("esmeringle_gender", selectedGender);
   };
 
   const {
@@ -82,7 +94,7 @@ export default function HomePage() {
         isPartnerLeft={isPartnerLeft}
         leftReason={leftReason}
         connectionStatus={connectionStatus}
-        onStart={startSearching}
+        onStart={(selectedGender?: Gender) => startSearching(selectedGender || gender)}
         onStop={stopChat}
         onSkip={skipPartner}
         onSendMessage={sendMessage}
@@ -92,6 +104,8 @@ export default function HomePage() {
         onToggleLang={toggleLang}
         onToggleTheme={toggleTheme}
         isDarkMode={isDarkMode}
+        gender={gender}
+        onSelectGender={handleGenderChange}
       />
     </div>
   );

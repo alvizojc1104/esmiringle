@@ -4,13 +4,19 @@ export interface Translations {
   appName: string;
   online: string;
   welcomeTitle: string;
-  ageNotice: string;
-  ruleNoNudity: string;
-  ruleCamera: string;
-  ruleRespect: string;
-  ruleViolators: string;
+  welcomeSubtitle: string;
+  genderPrompt: string;
+  genderMale: string;
+  genderFemale: string;
+  genderUndisclosed: string;
+  precautionsTitle: string;
+  rule18Plus: string;
+  ruleZeroTolerance: string;
+  rulePrivacy: string;
+  ruleModeration: string;
+  startChatting: string;
   chattingWithSomeoneNew: string;
-  locationBadge: string;
+  chattingWith: (gender?: string) => string;
   youLabel: string;
   strangerLabel: string;
   start: string;
@@ -34,14 +40,25 @@ export const translations: Record<Language, Translations> = {
   en: {
     appName: "esmeringle",
     online: "online",
-    welcomeTitle: "Welcome to esmeringle.",
-    ageNotice: "You must be 18 or older",
-    ruleNoNudity: "No nudity, hate speech, or harassment",
-    ruleCamera: "Do not ask for gender — this is not a dating site",
-    ruleRespect: "Be respectful to strangers",
-    ruleViolators: "Violators will be banned",
+    welcomeTitle: "Meet strangers safely.",
+    welcomeSubtitle: "Live 1-on-1 anonymous text chat. No accounts, no hassle.",
+    genderPrompt: "I identify as:",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderUndisclosed: "Prefer not to say",
+    precautionsTitle: "Safety & Community Precautions",
+    rule18Plus: "18+ Only: You must be at least 18 years old to use esmeringle.",
+    ruleZeroTolerance: "Zero tolerance for nudity, sexual harassment, hate speech, or abuse.",
+    rulePrivacy: "Stay anonymous: Never share passwords, phone numbers, or personal social media.",
+    ruleModeration: "Be respectful. Violators are banned immediately.",
+    startChatting: "Start Chatting",
     chattingWithSomeoneNew: "You're now chatting with someone new",
-    locationBadge: "Philippines",
+    chattingWith: (gender?: string) =>
+      gender === "female"
+        ? "Chatting with Amiga ♀"
+        : gender === "male"
+        ? "Chatting with Dawg ♂"
+        : "Chatting with Stranger 👤",
     youLabel: "You",
     strangerLabel: "Stranger",
     start: "Start",
@@ -63,14 +80,25 @@ export const translations: Record<Language, Translations> = {
   bisaya: {
     appName: "esmeringle",
     online: "online",
-    welcomeTitle: "Malipayong pag-abot sa esmeringle.",
-    ageNotice: "Kinahanglan 18 anyos pataas",
-    ruleNoNudity: "Walay law-ay, kasuko, o pagpamalikas",
-    ruleCamera: "Ayaw pangutana og gender — dili ni dating site",
-    ruleRespect: "Pagtahod sa mga estranghero",
-    ruleViolators: "Ang mga malapason i-ban",
+    welcomeTitle: "Kastorya og estranghero sa luwas nga paagi.",
+    welcomeSubtitle: "Direkta nga 1-on-1 anonymous text chat. Walay account, walay hasol.",
+    genderPrompt: "Akong gender:",
+    genderMale: "Lalaki",
+    genderFemale: "Babaye",
+    genderUndisclosed: "Dili lang ko magsaba",
+    precautionsTitle: "Mga Pahimangno ug Kaluwasan",
+    rule18Plus: "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmeringle.",
+    ruleZeroTolerance: "Bawal ang law-ay, bastos, pagpanghasi, o pagpamalikas.",
+    rulePrivacy: "Mag-amping: Ayaw ihatag imong password, phone number, o personal accounts.",
+    ruleModeration: "Pagtahod sa usag-usa. Ang mga magbinuang i-ban dayon.",
+    startChatting: "Sugdi ang Chat",
     chattingWithSomeoneNew: "Nakig-chat ka na og bag-ong estranghero",
-    locationBadge: "Pilipinas",
+    chattingWith: (gender?: string) =>
+      gender === "female"
+        ? "Kastorya nimo si Amiga ♀"
+        : gender === "male"
+        ? "Kastorya nimo si Dawg ♂"
+        : "Kastorya nimo ang Estranghero 👤",
     youLabel: "Ikaw",
     strangerLabel: "Estranghero",
     start: "Sugod",

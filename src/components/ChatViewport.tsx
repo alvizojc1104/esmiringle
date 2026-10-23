@@ -5,6 +5,7 @@ import {
   ChatMessage,
   PartnerProfile,
   MatchStatus,
+  Gender,
 } from "../types/chat";
 import { Language, translations } from "../utils/i18n";
 import {
@@ -14,6 +15,10 @@ import {
   Sun,
   Moon,
   Radio,
+  ShieldAlert,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { sound } from "../utils/audio";
 
@@ -26,7 +31,7 @@ interface ChatViewportProps {
   isPartnerLeft: boolean;
   leftReason?: "skipped" | "disconnected" | "reported" | null;
   connectionStatus?: "connected" | "reconnecting" | "disconnected";
-  onStart: () => void;
+  onStart: (gender?: Gender) => void;
   onStop: () => void;
   onSkip: () => void;
   onSendMessage: (text: string) => void;
@@ -36,11 +41,14 @@ interface ChatViewportProps {
   onToggleLang?: () => void;
   onToggleTheme?: () => void;
   isDarkMode?: boolean;
+  gender?: Gender;
+  onSelectGender?: (gender: Gender) => void;
 }
 
 export default function ChatViewport({
   status,
   onlineCount,
+  partner,
   messages,
   isPartnerTyping,
   isPartnerLeft,
@@ -56,8 +64,11 @@ export default function ChatViewport({
   onToggleLang,
   onToggleTheme,
   isDarkMode,
+  gender = "undisclosed",
+  onSelectGender,
 }: ChatViewportProps) {
   const [inputText, setInputText] = useState("");
+  const [selectedGender, setSelectedGender] = useState<Gender>(gender);
   const [isConfirmingSkip, setIsConfirmingSkip] = useState(false);
   const [showReportToast, setShowReportToast] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -67,6 +78,11 @@ export default function ChatViewport({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const t = translations[lang];
+
+  // Sync selectedGender if prop changes
+  useEffect(() => {
+    if (gender) setSelectedGender(gender);
+  }, [gender]);
 
   // Scroll message container to bottom on new messages without triggering window scroll
   useEffect(() => {
@@ -102,13 +118,27 @@ export default function ChatViewport({
         } else if (status === "matched") {
           handleSkipClick();
         } else if (status === "idle") {
-          onStart();
+          handleStart();
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [status, isPartnerLeft, isConfirmingSkip, onStart, onStop]);
+  }, [status, isPartnerLeft, isConfirmingSkip, onStart, onStop, selectedGender]);
+
+  const handleGenderChange = (newGender: Gender) => {
+    sound.playClickSound();
+    setSelectedGender(newGender);
+    if (onSelectGender) onSelectGender(newGender);
+    try {
+      sessionStorage.setItem("esmeringle_gender", newGender);
+    } catch (_) {}
+  };
+
+  const handleStart = () => {
+    sound.playClickSound();
+    onStart(selectedGender);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value);
@@ -142,7 +172,6 @@ export default function ChatViewport({
   const handleSkipClick = () => {
     sound.playClickSound();
 
-    // If partner already disconnected or left, immediately start new search without "Sure oy?"
     if (isPartnerLeft || status !== "matched") {
       setIsConfirmingSkip(false);
       if (skipTimeoutRef.current) clearTimeout(skipTimeoutRef.current);
@@ -151,12 +180,10 @@ export default function ChatViewport({
     }
 
     if (isConfirmingSkip) {
-      // Confirmed skip
       setIsConfirmingSkip(false);
       if (skipTimeoutRef.current) clearTimeout(skipTimeoutRef.current);
       onSkip();
     } else {
-      // First click: prompt confirmation (text changes only)
       setIsConfirmingSkip(true);
       if (skipTimeoutRef.current) clearTimeout(skipTimeoutRef.current);
       skipTimeoutRef.current = setTimeout(() => {
@@ -177,7 +204,7 @@ export default function ChatViewport({
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-none sm:min-h-[640px] sm:py-6 px-3 sm:px-0 justify-between font-sans overflow-hidden sm:overflow-visible">
-      {/* Top Header - Umingle Style */}
+      {/* Top Header - esmeringle Branding */}
       <header className="flex items-center justify-between py-2 sm:py-3 px-1 shrink-0 select-none">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
@@ -187,9 +214,14 @@ export default function ChatViewport({
             alt="esmeringle logo"
             className="w-8 h-8 rounded-lg object-contain shadow-xs"
           />
-          <span className="font-black text-2xl tracking-tight text-slate-900 dark:text-white">
-            {t.appName}
-          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-black text-2xl tracking-tight text-slate-900 dark:text-white">
+              {t.appName}
+            </span>
+            <span className="hidden sm:inline-block text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.2 rounded border border-blue-200/60 dark:border-blue-900/60">
+              live
+            </span>
+          </div>
         </div>
 
         {/* Right Header items */}
@@ -225,69 +257,172 @@ export default function ChatViewport({
         </div>
       </header>
 
-      {/* Main Umingle Card with Reduced Round Borders */}
-      <main className="relative flex-1 min-h-0 sm:min-h-[460px] bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden my-1 sm:my-2">
-        {/* Red Flag Icon in Top-Right */}
-        <button
-          onClick={handleReport}
-          title={t.reportStranger}
-          disabled={status !== "matched"}
-          className="absolute top-3.5 right-3.5 p-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition disabled:opacity-30 z-20"
-        >
-          <Flag className="w-5 h-5 fill-rose-500/10 stroke-rose-500 stroke-[2.2]" />
-        </button>
-
-        {/* Card Body - Standard scroll container without broken flex justify-end */}
-        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3 sm:p-4">
-          {/* STATE 1: IDLE - Umingle Welcome Card */}
+      {/* Main esmeringle Card */}
+      <main className="relative flex-1 min-h-0 sm:min-h-[460px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden my-1 sm:my-2">
+        {/* Card Body */}
+        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3.5 sm:p-4">
+          {/* STATE 1: IDLE - Redesigned esmeringle Welcome Card with Gender Selection & Safety Precautions */}
           {status === "idle" && (
-            <div className="min-h-full flex flex-col justify-end">
-              <div className="space-y-3 text-slate-900 dark:text-slate-100">
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+            <div className="min-h-full flex flex-col justify-between space-y-3.5">
+              {/* Welcome Headline */}
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[11px] font-bold text-blue-600 dark:text-blue-300">
+                  <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                  <span>100% Anonymous Chat</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                   {t.welcomeTitle}
                 </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                  {t.welcomeSubtitle}
+                </p>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[11px] font-bold">
-                    18+
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
-                    {t.ageNotice}
-                  </span>
+              {/* Gender Selection: 3 Options */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <span>{t.genderPrompt}</span>
+                  <span className="text-[11px] font-normal text-slate-400">Selected identity</span>
                 </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Male */}
+                  <button
+                    type="button"
+                    onClick={() => handleGenderChange("male")}
+                    className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedGender === "male"
+                        ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/30 scale-[1.01]"
+                        : "bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span className="text-base mb-0.5">♂️</span>
+                    <span>{t.genderMale}</span>
+                  </button>
 
-                <div className="space-y-1 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
-                  <p>{t.ruleNoNudity}</p>
-                  <p>{t.ruleCamera}</p>
-                  <p>{t.ruleRespect}</p>
-                  <p className="font-bold text-slate-900 dark:text-white pt-1">
-                    {t.ruleViolators}
-                  </p>
+                  {/* Female */}
+                  <button
+                    type="button"
+                    onClick={() => handleGenderChange("female")}
+                    className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedGender === "female"
+                        ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/30 scale-[1.01]"
+                        : "bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span className="text-base mb-0.5">♀️</span>
+                    <span>{t.genderFemale}</span>
+                  </button>
+
+                  {/* Prefer not to say */}
+                  <button
+                    type="button"
+                    onClick={() => handleGenderChange("undisclosed")}
+                    className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-lg text-xs font-bold transition-all ${
+                      selectedGender === "undisclosed"
+                        ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/30 scale-[1.01]"
+                        : "bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span className="text-base mb-0.5">👤</span>
+                    <span className="truncate max-w-[85px]">{t.genderUndisclosed}</span>
+                  </button>
                 </div>
               </div>
+
+              {/* Safety & Community Precautions Box */}
+              <div className="rounded-lg p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+                  <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>{t.precautionsTitle}</span>
+                </div>
+                <ul className="space-y-1 text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-snug">
+                  <li className="flex items-start gap-1.5">
+                    <span className="font-bold text-rose-500 shrink-0">18+</span>
+                    <span>{t.rule18Plus}</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="shrink-0">🛡️</span>
+                    <span>{t.ruleZeroTolerance}</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="shrink-0">🔒</span>
+                    <span>{t.rulePrivacy}</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="shrink-0">⚡</span>
+                    <span>{t.ruleModeration}</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Start Button Inside Idle Card */}
+              <button
+                type="button"
+                onClick={handleStart}
+                className="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-sm transition"
+              >
+                <span>{t.startChatting}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           )}
 
           {/* STATE 2: SEARCHING - Radar Pulse */}
           {status === "searching" && (
-            <div className="min-h-full flex flex-col items-center justify-center text-center space-y-3 p-4">
-              <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center">
-                <Radio className="w-7 h-7 text-blue-600 dark:text-blue-400 animate-pulse" />
+            <div className="min-h-full flex flex-col items-center justify-center text-center space-y-3.5 p-4">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute w-20 h-20 rounded-full bg-blue-500/10 dark:bg-blue-400/10 animate-ping" />
+                <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center z-10">
+                  <Radio className="w-7 h-7 text-blue-600 dark:text-blue-400 animate-pulse" />
+                </div>
               </div>
-              <div>
+              <div className="space-y-1">
                 <p className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                   {t.lookingForStranger}
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400">
                   {t.connectingOnline}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClickSound();
+                  onStop();
+                }}
+                className="px-4 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition"
+              >
+                {t.stop}
+              </button>
             </div>
           )}
 
           {/* STATE 3: MATCHED - Compact Transcript Log */}
           {status === "matched" && (
             <div className="min-h-full flex flex-col">
+              {/* Partner Banner in Matched State */}
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                    {t.chattingWith(partner?.gender)}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold border border-blue-200/50 dark:border-blue-900/50">
+                    Ephemeral
+                  </span>
+                </div>
+
+                {/* Report button */}
+                <button
+                  onClick={handleReport}
+                  title={t.reportStranger}
+                  className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition"
+                >
+                  <Flag className="w-4 h-4 stroke-[2]" />
+                </button>
+              </div>
+
+              {/* Message Transcript with Safe mt-auto */}
               <div className="mt-auto space-y-0.5 select-text w-full text-xs sm:text-[13px] leading-tight sm:leading-snug">
                 {/* Notice top banner */}
                 <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 pb-1">
@@ -295,7 +430,7 @@ export default function ChatViewport({
                   <span>{t.chattingWithSomeoneNew}</span>
                 </div>
 
-                {/* Message transcript */}
+                {/* Messages */}
                 {messages.map((msg) => {
                   if (msg.senderType === "system") {
                     return (
@@ -308,7 +443,7 @@ export default function ChatViewport({
                   const isYou = msg.senderType === "you";
                   return (
                     <div key={msg.id} className="break-words leading-tight sm:leading-snug">
-                      <span className={`font-bold ${isYou ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>
+                      <span className={`font-bold ${isYou ? "text-blue-600 dark:text-blue-400" : "text-indigo-600 dark:text-indigo-400"}`}>
                         {isYou ? `${t.youLabel}: ` : `${t.strangerLabel}: `}
                       </span>
                       <span className="text-slate-900 dark:text-slate-100 font-normal">
@@ -348,23 +483,21 @@ export default function ChatViewport({
 
         {/* Report toast */}
         {showReportToast && (
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-30 animate-fade-in">
-            {t.reportedToast}
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-30 animate-fade-in flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{t.reportedToast}</span>
           </div>
         )}
       </main>
 
       {/* Bottom Controls Bar with 3-line Text-Field and Matching Buttons */}
-      <footer className="space-y-2 shrink-0 pt-1">
+      <footer className="space-y-1.5 shrink-0 pt-1">
         <form onSubmit={handleSend} className="flex items-stretch gap-2">
           {/* Action Button: Start / Stop / Skip - Stretches to match textarea height exactly */}
           {status === "idle" ? (
             <button
               type="button"
-              onClick={() => {
-                sound.playClickSound();
-                onStart();
-              }}
+              onClick={handleStart}
               className="px-5 sm:px-6 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm sm:text-base transition shadow-sm shrink-0 flex items-center justify-center self-stretch"
             >
               {t.start}
@@ -384,10 +517,7 @@ export default function ChatViewport({
             /* When partner disconnected, button becomes Start */
             <button
               type="button"
-              onClick={() => {
-                sound.playClickSound();
-                onStart();
-              }}
+              onClick={handleStart}
               className="px-5 sm:px-6 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm sm:text-base transition shadow-sm shrink-0 flex items-center justify-center self-stretch"
             >
               {t.start}
@@ -449,7 +579,7 @@ export default function ChatViewport({
         </form>
 
         {/* Minimal Footer Watermark */}
-        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 pb-1">
+        <div className="text-center text-[10px] text-slate-400 dark:text-slate-500 font-mono tracking-wider pt-0.5 select-none">
           © esmeringle 2026 | quickchow | v1.0
         </div>
       </footer>
