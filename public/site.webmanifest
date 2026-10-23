@@ -1,6 +1,7 @@
 {
-  "name": "",
-  "short_name": "",
+  "name": "esmiringle — live text chat",
+  "short_name": "esmiringle",
+  "description": "Free, safe, and anonymous 1-on-1 live text chat.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -13,7 +14,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "background_color": "#020617",
   "display": "standalone"
 }
