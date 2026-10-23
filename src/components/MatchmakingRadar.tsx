@@ -54,7 +54,8 @@ export default function MatchmakingRadar({ profile, onlineCount, onCancel, lang 
         className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
       >
         <X className="w-3.5 h-3.5" />
-        <span>{t.cancel}</span>
+        <span className="sm:hidden">{lang === "bisaya" ? "Kanselahon" : "Cancel"}</span>
+        <span className="hidden sm:inline">{t.cancel}</span>
       </button>
     </div>
   );

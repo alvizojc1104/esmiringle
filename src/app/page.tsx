@@ -224,7 +224,7 @@ export default function HomePage() {
                   <MessageSquare className="w-4 h-4" />
                   <span>{t.startChat}</span>
                 </button>
-                <p className="text-xs text-slate-400 mt-2">{t.escTip}</p>
+                <p className="hidden sm:block text-xs text-slate-400 mt-2">{t.escTip}</p>
               </div>
             </div>
           )}

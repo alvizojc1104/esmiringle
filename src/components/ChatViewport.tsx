@@ -256,7 +256,8 @@ export default function ChatViewport({
               onClick={onNext}
               className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center gap-1.5 mx-auto shadow-sm"
             >
-              <span>{t.findNewStranger}</span>
+              <span className="sm:hidden">{lang === "bisaya" ? "Pangita og Bag-ong Kastorya" : "Find New Stranger"}</span>
+              <span className="hidden sm:inline">{t.findNewStranger}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
