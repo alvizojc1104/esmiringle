@@ -35,6 +35,10 @@ export interface Translations {
   maleLabel: string;
   femaleLabel: string;
   preferNotToSayLabel: string;
+  communityNotesTitle: string;
+  noteAge: string;
+  noteNoNudity: string;
+  notePrivacy: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -74,6 +78,10 @@ export const translations: Record<Language, Translations> = {
     maleLabel: "Male",
     femaleLabel: "Female",
     preferNotToSayLabel: "Prefer not to say",
+    communityNotesTitle: "Community Guidelines & Safety",
+    noteAge: "18+ Only: You must be at least 18 years old to use esmeringle.",
+    noteNoNudity: "No nudity or explicit content — keep it friendly and just for fun.",
+    notePrivacy: "Protect your privacy: Never share real names, passwords, phone numbers, or social accounts.",
   },
   bisaya: {
     appName: "esmeringle",
@@ -110,5 +118,9 @@ export const translations: Record<Language, Translations> = {
     maleLabel: "Lalaki",
     femaleLabel: "Babaye",
     preferNotToSayLabel: "Dili lang ko magsaba",
+    communityNotesTitle: "Mga Pahimangno ug Kaluwasan",
+    noteAge: "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmeringle.",
+    noteNoNudity: "Bawal ang law-ay o bastos — para lang sa lingaw-lingaw ug pakighigala.",
+    notePrivacy: "Ampingi imong privacy: Ayaw ihatag imong password, phone number, o personal accounts.",
   },
 };

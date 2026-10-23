@@ -6,7 +6,7 @@ import { UserProfile, Gender, GENDER_ALIASES } from "../types/chat";
 import { Language, translations } from "../utils/i18n";
 import { useChatSocket } from "../hooks/useChatSocket";
 import OnboardingModal from "../components/OnboardingModal";
-import { Sun, Moon, MessageSquare, Globe } from "lucide-react";
+import { Sun, Moon, MessageSquare, Globe, ShieldAlert } from "lucide-react";
 import { sound } from "../utils/audio";
 
 export default function HomePage() {
@@ -244,6 +244,28 @@ export default function HomePage() {
               </div>
             </div>
           )}
+
+          {/* Community Guidelines & Notes Card */}
+          <div className="mt-8 p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 text-left space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>{t.communityNotesTitle}</span>
+            </div>
+            <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-rose-500 shrink-0">18+</span>
+                <span>{t.noteAge}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="shrink-0">🚫</span>
+                <span>{t.noteNoNudity}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="shrink-0">🔒</span>
+                <span>{t.notePrivacy}</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </main>
 
