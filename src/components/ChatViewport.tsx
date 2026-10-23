@@ -211,9 +211,18 @@ export default function ChatViewport({
 
         {messages.map((msg) => {
           if (msg.senderType === "system") {
+            const isWarning = msg.text.startsWith("⚠️");
             return (
-              <div key={msg.id} className="text-center my-1">
-                <span className="text-xs text-slate-400">{msg.text}</span>
+              <div key={msg.id} className="text-center my-2">
+                <span
+                  className={`inline-block px-3 py-1.5 rounded-full text-xs ${
+                    isWarning
+                      ? "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-medium"
+                      : "text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                  }`}
+                >
+                  {msg.text}
+                </span>
               </div>
             );
           }

@@ -29,6 +29,7 @@ export function useChatSocket(profile: UserProfile | null) {
   const isPartnerLeftRef = useRef(isPartnerLeft);
   isPartnerLeftRef.current = isPartnerLeft;
   const hasConnectedOnceRef = useRef(false);
+  const lastSendTimeRef = useRef(0);
 
   // Initialize socket
   useEffect(() => {
@@ -129,6 +130,20 @@ export function useChatSocket(profile: UserProfile | null) {
       }
     });
 
+    socket.on("rate-limited", (data: { message: string; retryAfterMs: number }) => {
+      console.warn("[SOCKET] Rate limited:", data);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ratelimit_${Date.now()}`,
+          senderId: "system",
+          senderType: "system",
+          text: `⚠️ ${data.message || "You are sending messages too fast. Please slow down."}`,
+          timestamp: Date.now(),
+        },
+      ]);
+    });
+
     // Handle mobile phone unlock & tab focus (visibilitychange)
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -199,7 +214,12 @@ export function useChatSocket(profile: UserProfile | null) {
 
   const sendMessage = useCallback((text: string) => {
     if (!socketRef.current || !text.trim() || isPartnerLeftRef.current) return;
-    socketRef.current.emit("send-message", { text });
+    const now = Date.now();
+    if (now - lastSendTimeRef.current < 250) {
+      return;
+    }
+    lastSendTimeRef.current = now;
+    socketRef.current.emit("send-message", { text: text.trim().slice(0, 1000) });
   }, []);
 
   const sendTyping = useCallback((isTyping: boolean) => {

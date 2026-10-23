@@ -29,6 +29,7 @@ export interface Translations {
   next: string;
   typePlaceholder: string;
   rematchPlaceholder: (alias: string) => string;
+  rateLimitWarning: string;
   modalTitle: string;
   modalSubTitle: string;
   maleLabel: string;
@@ -67,6 +68,7 @@ export const translations: Record<Language, Translations> = {
     next: "Skip",
     typePlaceholder: "Type a message... (Press Enter to send)",
     rematchPlaceholder: (alias) => `${alias} disconnected. Click 'Skip' to rematch.`,
+    rateLimitWarning: "You are sending messages too fast! Please slow down.",
     modalTitle: "Choose your alias",
     modalSubTitle: "Select how you want to be identified in chat.",
     maleLabel: "Male",
@@ -102,6 +104,7 @@ export const translations: Record<Language, Translations> = {
     next: "Skip",
     typePlaceholder: "Pag-type dinhi... (Pindota ang Enter aron ipadala)",
     rematchPlaceholder: (alias) => `Nibiya si ${alias}. Pindota ang 'Skip' para mangita og lain.`,
+    rateLimitWarning: "Paspas ra kaayo imong pag-chat! Hinay-hinay lang usa.",
     modalTitle: "Pilia imong alias",
     modalSubTitle: "Pilia kung unsaon ka pag-ila sa chat.",
     maleLabel: "Lalaki",

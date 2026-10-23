@@ -2,6 +2,11 @@ import { createServer } from "http";
 import next from "next";
 import { Server, Socket } from "socket.io";
 import { UserProfile, QueueEntry } from "./src/types/chat";
+import {
+  SlidingWindowRateLimiter,
+  TemporaryBlocklist,
+  getClientIp,
+} from "./src/server/rateLimiter";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -32,6 +37,44 @@ app.prepare().then(() => {
       origin: "*",
       methods: ["GET", "POST"],
     },
+    // Max payload size to protect against memory exhaustion
+    maxHttpBufferSize: 1e6, // 1MB
+    pingTimeout: 20000,
+    pingInterval: 10000,
+  });
+
+  // Anti-DDoS Rate Limiters
+  const messageLimiter = new SlidingWindowRateLimiter({ windowMs: 3000, maxRequests: 5 });
+  const skipLimiter = new SlidingWindowRateLimiter({ windowMs: 4000, maxRequests: 4 });
+  const typingLimiter = new SlidingWindowRateLimiter({ windowMs: 1000, maxRequests: 3 });
+  const connectionLimiter = new SlidingWindowRateLimiter({ windowMs: 60000, maxRequests: 30 });
+  const temporaryBlocklist = new TemporaryBlocklist();
+  const activeConnectionsPerIp = new Map<string, number>();
+
+  // Connection-level anti-DDoS middleware
+  io.use((socket, next) => {
+    const clientIp = getClientIp(socket);
+
+    if (temporaryBlocklist.isBlocked(clientIp)) {
+      console.warn(`[RATE LIMIT] Rejected connection from temporarily blocked IP: ${clientIp}`);
+      return next(new Error("Temporarily blocked due to rate limit abuse. Try again later."));
+    }
+
+    const connCheck = connectionLimiter.check(clientIp);
+    if (!connCheck.allowed) {
+      console.warn(`[RATE LIMIT] Connection flood detected from IP: ${clientIp}. Blocking for 60s.`);
+      temporaryBlocklist.block(clientIp, 60000);
+      return next(new Error("Too many connection attempts. Please slow down."));
+    }
+
+    const currentConns = activeConnectionsPerIp.get(clientIp) || 0;
+    if (currentConns >= 8) {
+      console.warn(`[RATE LIMIT] Max concurrent connections exceeded for IP: ${clientIp} (${currentConns})`);
+      return next(new Error("Too many concurrent chat sessions from this IP."));
+    }
+
+    activeConnectionsPerIp.set(clientIp, currentConns + 1);
+    next();
   });
 
   const waitingQueue: QueueEntry[] = [];
@@ -163,13 +206,41 @@ app.prepare().then(() => {
         socket.emit("partner-left", { reason: "disconnected" });
         return;
       }
-      if (!data.text || !data.text.trim()) return;
+      if (!data || typeof data.text !== "string" || !data.text.trim()) return;
+
+      // Rate limit check
+      const clientIp = getClientIp(socket);
+      const socketCheck = messageLimiter.check(socket.id);
+      const ipCheck = messageLimiter.check(`msg_ip_${clientIp}`);
+
+      if (!socketCheck.allowed || !ipCheck.allowed) {
+        // Severe flood detection (more than 12 rapid messages in window)
+        if (socketCheck.currentCount > 12) {
+          console.warn(`[DDOS SHIELD] Abusive message flood from ${clientIp} (socket: ${socket.id}). Banning for 60s.`);
+          temporaryBlocklist.block(clientIp, 60000);
+          socket.emit("rate-limited", {
+            message: "Excessive message flooding detected. You have been temporarily blocked.",
+            retryAfterMs: 60000,
+          });
+          socket.disconnect(true);
+          return;
+        }
+
+        socket.emit("rate-limited", {
+          message: "You are sending messages too fast! Please slow down.",
+          retryAfterMs: Math.max(socketCheck.retryAfterMs, ipCheck.retryAfterMs),
+        });
+        return;
+      }
+
+      // Max message length guard
+      const sanitizedText = data.text.trim().slice(0, 1000);
 
       const message = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         senderId: socket.id,
         senderType: "stranger",
-        text: data.text.trim().slice(0, 1000),
+        text: sanitizedText,
         timestamp: Date.now(),
       };
 
@@ -181,6 +252,9 @@ app.prepare().then(() => {
     });
 
     socket.on("typing", (isTyping: boolean) => {
+      const typingCheck = typingLimiter.check(socket.id);
+      if (!typingCheck.allowed) return;
+
       const room = activeRooms.get(socket.id);
       if (room) {
         socket.to(room.partnerSocketId).emit("partner-typing", isTyping);
@@ -188,6 +262,15 @@ app.prepare().then(() => {
     });
 
     socket.on("skip-partner", () => {
+      const skipCheck = skipLimiter.check(socket.id);
+      if (!skipCheck.allowed) {
+        socket.emit("rate-limited", {
+          message: "You are skipping too fast! Please wait a moment.",
+          retryAfterMs: skipCheck.retryAfterMs,
+        });
+        return;
+      }
+
       const room = activeRooms.get(socket.id);
       if (room) {
         const partnerSocket = io.sockets.sockets.get(room.partnerSocketId);
@@ -212,6 +295,18 @@ app.prepare().then(() => {
     });
 
     socket.on("disconnect", () => {
+      const clientIp = getClientIp(socket);
+      const conns = activeConnectionsPerIp.get(clientIp) || 1;
+      if (conns <= 1) {
+        activeConnectionsPerIp.delete(clientIp);
+      } else {
+        activeConnectionsPerIp.set(clientIp, conns - 1);
+      }
+
+      messageLimiter.reset(socket.id);
+      skipLimiter.reset(socket.id);
+      typingLimiter.reset(socket.id);
+
       const qIdx = waitingQueue.findIndex((q) => q.socketId === socket.id);
       if (qIdx !== -1) {
         waitingQueue.splice(qIdx, 1);
