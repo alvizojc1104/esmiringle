@@ -25,7 +25,9 @@ export default function HomePage() {
     setIsClient(true);
 
     // Language setup - default to bisaya
-    const savedLang = sessionStorage.getItem("esmeringle_lang") as Language | null;
+    const savedLang = sessionStorage.getItem(
+      "esmeringle_lang",
+    ) as Language | null;
     if (savedLang === "bisaya" || savedLang === "en") {
       setLang(savedLang);
     } else {
@@ -110,9 +112,7 @@ export default function HomePage() {
             </span>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>
-                {onlineCount || 1} {t.online}
-              </span>
+              <span>{onlineCount || 1}</span>
             </div>
           </div>
 
@@ -122,7 +122,9 @@ export default function HomePage() {
               onClick={toggleLang}
               aria-label="Toggle language"
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
-              title={lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"}
+              title={
+                lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"
+              }
             >
               <Globe className="w-3.5 h-3.5 text-slate-500" />
               <span>{lang === "bisaya" ? "Bisaya" : "English"}</span>
@@ -134,7 +136,11 @@ export default function HomePage() {
               aria-label="Toggle theme"
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDarkMode ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
@@ -224,7 +230,9 @@ export default function HomePage() {
                   <MessageSquare className="w-4 h-4" />
                   <span>{t.startChat}</span>
                 </button>
-                <p className="hidden sm:block text-xs text-slate-400 mt-2">{t.escTip}</p>
+                <p className="hidden sm:block text-xs text-slate-400 mt-2">
+                  {t.escTip}
+                </p>
               </div>
             </div>
           )}
