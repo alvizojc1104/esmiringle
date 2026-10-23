@@ -136,7 +136,7 @@ export default function ChatViewport({
             >
               <Globe className="w-3.5 h-3.5 text-slate-500" />
               <span className="hidden sm:inline">{lang === "bisaya" ? "Bisaya" : "English"}</span>
-              <span className="sm:hidden">{lang === "bisaya" ? "CEB" : "EN"}</span>
+              <span className="sm:hidden">{lang === "bisaya" ? "BIS" : "EN"}</span>
             </button>
           )}
 
