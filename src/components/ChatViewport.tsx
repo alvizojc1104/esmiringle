@@ -232,10 +232,10 @@ export default function ChatViewport({
         </button>
 
         {/* Card Body - Content based on status */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 flex flex-col justify-end">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 flex flex-col justify-end">
           {/* STATE 1: IDLE - Umingle Welcome Card */}
           {status === "idle" && (
-            <div className="space-y-3.5 text-slate-900 dark:text-slate-100 my-auto sm:my-0 sm:mt-auto">
+            <div className="space-y-3 text-slate-900 dark:text-slate-100 my-auto sm:my-0 sm:mt-auto">
               <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
                 {t.welcomeTitle}
               </h2>
@@ -277,11 +277,11 @@ export default function ChatViewport({
             </div>
           )}
 
-          {/* STATE 3: MATCHED - Transcript Log (Philippines removed) */}
+          {/* STATE 3: MATCHED - Compact Transcript Log */}
           {status === "matched" && (
-            <div className="space-y-2 select-text w-full">
+            <div className="space-y-0.5 select-text w-full text-xs sm:text-[13px] leading-tight sm:leading-snug">
               {/* Notice top banner */}
-              <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 pt-1 pb-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 pb-1">
                 <span>✨</span>
                 <span>{t.chattingWithSomeoneNew}</span>
               </div>
@@ -290,7 +290,7 @@ export default function ChatViewport({
               {messages.map((msg) => {
                 if (msg.senderType === "system") {
                   return (
-                    <div key={msg.id} className="text-xs font-bold text-slate-800 dark:text-slate-200 py-0.5">
+                    <div key={msg.id} className="font-bold text-slate-800 dark:text-slate-200 py-0.5">
                       {msg.text}
                     </div>
                   );
@@ -298,11 +298,11 @@ export default function ChatViewport({
 
                 const isYou = msg.senderType === "you";
                 return (
-                  <div key={msg.id} className="text-sm leading-relaxed break-words">
+                  <div key={msg.id} className="break-words leading-tight sm:leading-snug">
                     <span className={`font-bold ${isYou ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>
                       {isYou ? `${t.youLabel}: ` : `${t.strangerLabel}: `}
                     </span>
-                    <span className="text-slate-900 dark:text-slate-100">
+                    <span className="text-slate-900 dark:text-slate-100 font-normal">
                       {msg.text}
                     </span>
                   </div>
@@ -311,14 +311,14 @@ export default function ChatViewport({
 
               {/* Typing indicator */}
               {isPartnerTyping && !isPartnerLeft && (
-                <div className="text-xs text-slate-400 dark:text-slate-500 italic py-0.5">
+                <div className="text-slate-400 dark:text-slate-500 italic text-[11px] sm:text-xs">
                   {t.typingStranger}
                 </div>
               )}
 
               {/* Disconnection notice */}
               {isPartnerLeft && (
-                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 pt-1">
+                <div className="font-bold text-slate-900 dark:text-slate-100 pt-1.5">
                   {leftReason === "skipped"
                     ? t.strangerSkipped
                     : t.strangerDisconnected}
@@ -326,7 +326,7 @@ export default function ChatViewport({
               )}
 
               {connectionStatus === "reconnecting" && (
-                <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold pt-1">
+                <div className="text-amber-600 dark:text-amber-400 font-semibold pt-1">
                   Reconnecting...
                 </div>
               )}
