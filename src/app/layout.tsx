@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "esmiringle — Talk to Strangers Live",
+    default: "esmiringle — chat with strangers live",
     template: "%s | esmiringle",
   },
   description:
@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   applicationName: "esmiringle",
   keywords: [
     "esmiringle",
+    "chat with strangers live",
+    "chat with strangers",
     "talk to strangers",
     "anonymous chat",
     "live text chat",
@@ -58,7 +60,7 @@ export const metadata: Metadata = {
     alternateLocale: ["fil_PH"],
     url: siteUrl,
     siteName: "esmiringle",
-    title: "esmiringle — Talk to Strangers Live",
+    title: "esmiringle — chat with strangers live",
     description:
       "Free, safe, and anonymous 1-on-1 live text chat. Connect with strangers instantly without accounts or downloads.",
     images: [
@@ -72,7 +74,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "esmiringle — Talk to Strangers Live",
+    title: "esmiringle — chat with strangers live",
     description:
       "Free, safe, and anonymous 1-on-1 live text chat. Connect with strangers instantly without accounts or downloads.",
     images: ["/android-chrome-512x512.png"],
