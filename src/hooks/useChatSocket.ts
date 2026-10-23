@@ -7,13 +7,12 @@ import {
   PartnerProfile,
   UserProfile,
   MatchStatus,
-  Gender,
 } from "../types/chat";
 import { sound } from "../utils/audio";
 
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
-export function useChatSocket(initialProfile?: UserProfile | null) {
+export function useChatSocket(profile: UserProfile | null) {
   const socketRef = useRef<Socket | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [status, setStatus] = useState<MatchStatus>("idle");
@@ -196,29 +195,16 @@ export function useChatSocket(initialProfile?: UserProfile | null) {
     };
   }, []);
 
-  const startSearching = useCallback((profileOverride?: UserProfile | Gender) => {
-    if (!socketRef.current) return;
+  const startSearching = useCallback(() => {
+    if (!socketRef.current || !profile) return;
     setPartner(null);
     setMessages([]);
     setIsPartnerLeft(false);
     setLeftReason(null);
     setIsPartnerTyping(false);
     setStatus("searching");
-    let userProfile: UserProfile;
-    if (typeof profileOverride === "string") {
-      userProfile = {
-        id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        gender: profileOverride,
-      };
-    } else if (profileOverride && typeof profileOverride === "object") {
-      userProfile = profileOverride;
-    } else {
-      userProfile = initialProfile || {
-        id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      };
-    }
-    socketRef.current.emit("join-queue", userProfile);
-  }, [initialProfile]);
+    socketRef.current.emit("join-queue", profile);
+  }, [profile]);
 
   const cancelSearching = useCallback(() => {
     if (!socketRef.current) return;
@@ -242,11 +228,11 @@ export function useChatSocket(initialProfile?: UserProfile | null) {
   }, []);
 
   const skipPartner = useCallback(() => {
-    if (!socketRef.current) return;
+    if (!socketRef.current || !profile) return;
     socketRef.current.emit("skip-partner");
     // Immediately rejoin queue for quick continuous Omegle experience
     startSearching();
-  }, [startSearching]);
+  }, [profile, startSearching]);
 
   const stopChat = useCallback(() => {
     if (!socketRef.current) return;

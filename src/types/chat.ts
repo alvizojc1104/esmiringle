@@ -8,12 +8,12 @@ export const GENDER_ALIASES: Record<Gender, string> = {
 
 export interface UserProfile {
   id: string;
-  gender?: Gender;
+  gender: Gender;
 }
 
 export interface PartnerProfile {
   id: string;
-  gender?: Gender;
+  gender: Gender;
   roomId: string;
 }
 
