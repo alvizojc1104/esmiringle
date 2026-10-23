@@ -142,7 +142,7 @@ app.prepare().then(() => {
         roomId,
       });
 
-      console.log(`[MATCH] Room ${roomId} matched (${currentEntry.profile.gender} & ${candidate.profile.gender})`);
+      console.log(`[MATCH] Room ${roomId} matched`);
       return true;
     }
 
@@ -152,8 +152,9 @@ app.prepare().then(() => {
   io.on("connection", (socket: Socket) => {
     broadcastOnlineCount();
 
-    socket.on("join-queue", (profile: UserProfile) => {
-      userProfiles.set(socket.id, profile);
+    socket.on("join-queue", (profile?: UserProfile) => {
+      const userProfile: UserProfile = profile && profile.id ? profile : { id: socket.id };
+      userProfiles.set(socket.id, userProfile);
 
       // Clean up previous queue entries
       const existingIdx = waitingQueue.findIndex((q) => q.socketId === socket.id);
@@ -174,7 +175,7 @@ app.prepare().then(() => {
 
       const queueEntry: QueueEntry = {
         socketId: socket.id,
-        profile,
+        profile: userProfile,
         joinedAt: Date.now(),
       };
 

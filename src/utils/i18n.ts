@@ -3,112 +3,90 @@ export type Language = 'en' | 'bisaya';
 export interface Translations {
   appName: string;
   online: string;
-  talkToStrangers: string;
-  subTitle: string;
-  chooseAlias: string;
-  chattingAs: string;
-  change: string;
-  startChat: string;
-  escTip: string;
+  welcomeTitle: string;
+  ageNotice: string;
+  ruleNoNudity: string;
+  ruleCamera: string;
+  ruleRespect: string;
+  ruleViolators: string;
+  chattingWithSomeoneNew: string;
+  locationBadge: string;
+  youLabel: string;
+  strangerLabel: string;
+  start: string;
+  stop: string;
+  skip: string;
+  skipConfirm: string; // "Really?" or "Sure oy?"
   lookingForStranger: string;
   connectingOnline: string;
-  cancel: string;
-  stranger: string;
-  connected: string;
-  reconnecting: string;
-  disconnectedStatus: string;
-  connectionLostDesc: string;
-  leave: string;
-  welcomeChat: (alias: string, article: string) => string;
-  typing: (alias: string) => string;
-  partnerDisconnected: (alias: string) => string;
-  partnerSkipped: (alias: string) => string;
-  connectionEnded: string;
-  findNewStranger: string;
-  skip: string;
-  next: string;
   typePlaceholder: string;
-  rematchPlaceholder: (alias: string) => string;
   rateLimitWarning: string;
-  modalTitle: string;
-  modalSubTitle: string;
-  maleLabel: string;
-  femaleLabel: string;
-  preferNotToSayLabel: string;
+  strangerDisconnected: string;
+  strangerSkipped: string;
+  connectionEnded: string;
+  connectionLostDesc: string;
+  typingStranger: string;
+  reportStranger: string;
+  reportedToast: string;
 }
 
 export const translations: Record<Language, Translations> = {
   en: {
     appName: "esmeringle",
     online: "online",
-    talkToStrangers: "Talk to strangers",
-    subTitle: "live 1-on-1 anonymous text chat.",
-    chooseAlias: "Choose your alias:",
-    chattingAs: "Chatting as:",
-    change: "Change",
-    startChat: "Start Chat",
-    escTip: "Press ESC to skip anytime.",
-    lookingForStranger: "Looking for a stranger...",
-    connectingOnline: "Connecting you with someone online on esmeringle.",
-    cancel: "Cancel (ESC)",
-    stranger: "Stranger",
-    connected: "Connected",
-    reconnecting: "Reconnecting...",
-    disconnectedStatus: "Disconnected",
-    connectionLostDesc: "Connection lost (phone was locked or network disconnected). Click 'Skip' to rematch.",
-    leave: "Leave",
-    welcomeChat: (alias, article) =>
-      `You are now chatting with ${article} ${alias}. Say hi!`,
-    typing: (alias) => `${alias} is typing`,
-    partnerDisconnected: (alias) => `${alias} has disconnected`,
-    partnerSkipped: (alias) => `${alias} skipped to the next person.`,
-    connectionEnded: "The connection ended.",
-    findNewStranger: "Skip / Find New Stranger (ESC)",
+    welcomeTitle: "Welcome to esmeringle.",
+    ageNotice: "You must be 18 or older",
+    ruleNoNudity: "No nudity, hate speech, or harassment",
+    ruleCamera: "Do not ask for gender — this is not a dating site",
+    ruleRespect: "Be respectful to strangers",
+    ruleViolators: "Violators will be banned",
+    chattingWithSomeoneNew: "You're now chatting with someone new",
+    locationBadge: "Philippines",
+    youLabel: "You",
+    strangerLabel: "Stranger",
+    start: "Start",
+    stop: "Stop",
     skip: "Skip",
-    next: "Skip",
-    typePlaceholder: "Type a message... (Press Enter to send)",
-    rematchPlaceholder: (alias) => `${alias} disconnected. Click 'Skip' to rematch.`,
-    rateLimitWarning: "You are sending messages too fast! Please slow down.",
-    modalTitle: "Choose your alias",
-    modalSubTitle: "Select how you want to be identified in chat.",
-    maleLabel: "Male",
-    femaleLabel: "Female",
-    preferNotToSayLabel: "Prefer not to say",
+    skipConfirm: "Really?",
+    lookingForStranger: "Looking for a stranger...",
+    connectingOnline: "Connecting you with someone online on esmeringle...",
+    typePlaceholder: "Type a message...",
+    rateLimitWarning: "⚠️ You are sending messages too fast! Please slow down.",
+    strangerDisconnected: "Stranger has disconnected",
+    strangerSkipped: "Stranger has skipped",
+    connectionEnded: "The connection ended.",
+    connectionLostDesc: "Connection lost (phone was locked or network disconnected). Click 'Start' to rematch.",
+    typingStranger: "Stranger is typing...",
+    reportStranger: "Report stranger",
+    reportedToast: "Stranger has been reported and skipped.",
   },
   bisaya: {
     appName: "esmeringle",
     online: "online",
-    talkToStrangers: "Chika sa mga estranghero",
-    subTitle: "direkta nga 1-on-1 anonymous text chat.",
-    chooseAlias: "Pilia imong alias:",
-    chattingAs: "Nag-chat isip:",
-    change: "Ilisi",
-    startChat: "Sugdi ang Chat",
-    escTip: "Pindota ang ESC para mo-skip bisan kanus-a.",
-    lookingForStranger: "Nangita og kastorya...",
-    connectingOnline: "Gikonektar ka sa usa ka tawo sa esmeringle.",
-    cancel: "Kanselahon (ESC)",
-    stranger: "Estranghero",
-    connected: "Konektado",
-    reconnecting: "Nagkonektar og balik...",
-    disconnectedStatus: "Nawala ang koneksyon",
-    connectionLostDesc: "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Skip' para mangita og lain.",
-    leave: "Biya",
-    welcomeChat: (alias) => `Nakig-istorya na ka sa usa ka ${alias}. Pangumusta!`,
-    typing: (alias) => `Nagsulat si ${alias}...`,
-    partnerDisconnected: (alias) => `Nibiya na si ${alias}`,
-    partnerSkipped: (alias) => `Ni-skip si ${alias} sa sunod nga tawo.`,
-    connectionEnded: "Naundang na ang inyong istorya.",
-    findNewStranger: "Skip / Pangita og Bag-ong Kastorya (ESC)",
+    welcomeTitle: "Malipayong pag-abot sa esmeringle.",
+    ageNotice: "Kinahanglan 18 anyos pataas",
+    ruleNoNudity: "Walay law-ay, kasuko, o pagpamalikas",
+    ruleCamera: "Ayaw pangutana og gender — dili ni dating site",
+    ruleRespect: "Pagtahod sa mga estranghero",
+    ruleViolators: "Ang mga malapason i-ban",
+    chattingWithSomeoneNew: "Nakig-chat ka na og bag-ong estranghero",
+    locationBadge: "Pilipinas",
+    youLabel: "Ikaw",
+    strangerLabel: "Estranghero",
+    start: "Sugod",
+    stop: "Undang",
     skip: "Skip",
-    next: "Skip",
-    typePlaceholder: "Pag-type dinhi... (Pindota ang Enter aron ipadala)",
-    rematchPlaceholder: (alias) => `Nibiya si ${alias}. Pindota ang 'Skip' para mangita og lain.`,
-    rateLimitWarning: "Paspas ra kaayo imong pag-chat! Hinay-hinay lang usa.",
-    modalTitle: "Pilia imong alias",
-    modalSubTitle: "Pilia kung unsaon ka pag-ila sa chat.",
-    maleLabel: "Lalaki",
-    femaleLabel: "Babaye",
-    preferNotToSayLabel: "Dili lang ko magsaba",
+    skipConfirm: "Sure oy?",
+    lookingForStranger: "Nangita og estranghero...",
+    connectingOnline: "Gikonektar ka sa usa ka tawo nga online sa esmeringle...",
+    typePlaceholder: "Pag-type dinhi...",
+    rateLimitWarning: "⚠️ Paspas ra kaayo imong pag-chat! Hinay-hinay lang usa.",
+    strangerDisconnected: "Nibiya na ang estranghero",
+    strangerSkipped: "Ni-skip ang estranghero",
+    connectionEnded: "Naundang na ang inyong istorya.",
+    connectionLostDesc: "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Sugod' para mangita og lain.",
+    typingStranger: "Nagsulat ang estranghero...",
+    reportStranger: "I-report ang estranghero",
+    reportedToast: "Nareport ug gi-skip na ang estranghero.",
   },
 };

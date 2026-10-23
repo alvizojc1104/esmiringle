@@ -12,7 +12,7 @@ import { sound } from "../utils/audio";
 
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
-export function useChatSocket(profile: UserProfile | null) {
+export function useChatSocket(initialProfile?: UserProfile | null) {
   const socketRef = useRef<Socket | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [status, setStatus] = useState<MatchStatus>("idle");
@@ -196,15 +196,18 @@ export function useChatSocket(profile: UserProfile | null) {
   }, []);
 
   const startSearching = useCallback(() => {
-    if (!socketRef.current || !profile) return;
+    if (!socketRef.current) return;
     setPartner(null);
     setMessages([]);
     setIsPartnerLeft(false);
     setLeftReason(null);
     setIsPartnerTyping(false);
     setStatus("searching");
-    socketRef.current.emit("join-queue", profile);
-  }, [profile]);
+    const userProfile = initialProfile || {
+      id: `u_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    };
+    socketRef.current.emit("join-queue", userProfile);
+  }, [initialProfile]);
 
   const cancelSearching = useCallback(() => {
     if (!socketRef.current) return;
@@ -228,11 +231,11 @@ export function useChatSocket(profile: UserProfile | null) {
   }, []);
 
   const skipPartner = useCallback(() => {
-    if (!socketRef.current || !profile) return;
+    if (!socketRef.current) return;
     socketRef.current.emit("skip-partner");
     // Immediately rejoin queue for quick continuous Omegle experience
     startSearching();
-  }, [profile, startSearching]);
+  }, [startSearching]);
 
   const stopChat = useCallback(() => {
     if (!socketRef.current) return;
