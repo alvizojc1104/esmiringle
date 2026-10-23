@@ -45,5 +45,5 @@ pkg.version = newVersion;
 
 fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
 
-console.log(`\n🚀 [esmeringle] Version bumped: v${currentVersion} ➔ v${newVersion} (${type})`);
+console.log(`\n🚀 [esmiringle] Version bumped: v${currentVersion} ➔ v${newVersion} (${type})`);
 console.log(`   Updated: package.json\n`);

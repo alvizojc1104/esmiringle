@@ -11,7 +11,7 @@ export default function Loading() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/android-chrome-192x192.png"
-          alt="esmeringle loading"
+          alt="esmiringle loading"
           className="relative w-16 h-16 rounded-2xl object-contain shadow-md animate-pulse"
         />
       </div>

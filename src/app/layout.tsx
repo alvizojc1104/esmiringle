@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "esmeringle — live text chat",
+  title: "esmiringle — live text chat",
   description: "Anonymous 1-on-1 live text chatting.",
 };
 

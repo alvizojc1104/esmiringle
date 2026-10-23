@@ -43,17 +43,17 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
-    appName: "esmeringle",
+    appName: "esmiringle",
     online: "online",
     talkToStrangers: "Talk to strangers",
     subTitle: "live 1-on-1 anonymous text chat.",
     chooseAlias: "Choose your alias:",
     chattingAs: "Chatting as:",
     change: "Change",
-    startChat: "Start Chat",
+    startChat: "start esmiringling",
     escTip: "Press ESC to skip anytime.",
     lookingForStranger: "Looking for a stranger...",
-    connectingOnline: "Connecting you with someone online on esmeringle.",
+    connectingOnline: "Connecting you with someone online on esmiringle.",
     cancel: "Cancel (ESC)",
     stranger: "Stranger",
     connected: "Connected",
@@ -81,24 +81,24 @@ export const translations: Record<Language, Translations> = {
     femaleLabel: "Female",
     preferNotToSayLabel: "Prefer not to say",
     communityNotesTitle: "Community Guidelines & Safety",
-    noteAge: "18+ Only: You must be at least 18 years old to use esmeringle.",
+    noteAge: "18+ Only: You must be at least 18 years old to use esmiringle.",
     noteNoNudity:
       "No nudity or explicit content — keep it friendly and just for fun.",
     notePrivacy:
       "Protect your privacy: Never share real names, passwords, phone numbers, or social accounts.",
   },
   bisaya: {
-    appName: "esmeringle",
+    appName: "esmiringle",
     online: "online",
     talkToStrangers: "Chika sa mga estranghero",
     subTitle: "direkta nga 1-on-1 anonymous text chat.",
     chooseAlias: "Pilia imong alias:",
     chattingAs: "Nag-chat isip:",
     change: "Ilisi",
-    startChat: "Sugdi ang Chat",
+    startChat: "mag-esmiringle na",
     escTip: "Pindota ang ESC para mo-skip bisan kanus-a.",
     lookingForStranger: "Nangita og kastorya...",
-    connectingOnline: "Gikonektar ka sa usa ka tawo sa esmeringle.",
+    connectingOnline: "Gikonektar ka sa usa ka tawo sa esmiringle.",
     cancel: "Kanselahon (ESC)",
     stranger: "Estranghero",
     connected: "Konektado",
@@ -127,7 +127,7 @@ export const translations: Record<Language, Translations> = {
     preferNotToSayLabel: "Basta secret",
     communityNotesTitle: "Mga Pahimangno ug Kaluwasan",
     noteAge:
-      "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmeringle.",
+      "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmiringle.",
     noteNoNudity:
       "Bawal ang law-ay o bastos — para lang sa lingaw-lingaw ug pakighigala.",
     notePrivacy:

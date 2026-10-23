@@ -112,7 +112,7 @@ export default function HomePage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/android-chrome-192x192.png"
-                alt="esmeringle logo"
+                alt="esmiringle logo"
                 className="w-6 h-6 rounded-md object-contain shadow-xs"
               />
               <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-100 lowercase">
@@ -283,7 +283,7 @@ export default function HomePage() {
 
       {/* Watermarked Footer with App Versioning */}
       <footer className="w-full border-t border-slate-200 dark:border-slate-800 py-3.5 text-center text-xs text-slate-400 dark:text-slate-500">
-        <span>&copy; esmeringle 2026 | quickchow | {APP_VERSION}</span>
+        <span>&copy; esmiringle 2026 | quickchow | {APP_VERSION}</span>
       </footer>
     </div>
   );
