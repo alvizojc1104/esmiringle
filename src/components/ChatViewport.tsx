@@ -346,8 +346,8 @@ export default function ChatViewport({
 
       {/* Bottom Controls Bar with 3-line Text-Field and Matching Buttons */}
       <footer className="space-y-2 shrink-0 pt-1">
-        <form onSubmit={handleSend} className="flex items-end gap-2">
-          {/* Action Button: Start / Stop / Skip */}
+        <form onSubmit={handleSend} className="flex items-stretch gap-2">
+          {/* Action Button: Start / Stop / Skip - Stretches to match textarea height exactly */}
           {status === "idle" ? (
             <button
               type="button"
@@ -355,7 +355,7 @@ export default function ChatViewport({
                 sound.playClickSound();
                 onStart();
               }}
-              className="h-[4.75rem] sm:h-[5rem] px-5 sm:px-6 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm sm:text-base transition shadow-sm shrink-0 flex items-center justify-center"
+              className="px-5 sm:px-6 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm sm:text-base transition shadow-sm shrink-0 flex items-center justify-center self-stretch"
             >
               {t.start}
             </button>
@@ -366,7 +366,7 @@ export default function ChatViewport({
                 sound.playClickSound();
                 onStop();
               }}
-              className="h-[4.75rem] sm:h-[5rem] px-5 sm:px-6 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 font-bold text-sm transition shrink-0 flex items-center justify-center"
+              className="px-5 sm:px-6 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 font-bold text-sm transition shrink-0 flex items-center justify-center self-stretch"
             >
               {t.stop}
             </button>
@@ -378,17 +378,17 @@ export default function ChatViewport({
                 sound.playClickSound();
                 onStart();
               }}
-              className="h-[4.75rem] sm:h-[5rem] px-5 sm:px-6 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm sm:text-base transition shadow-sm shrink-0 flex items-center justify-center"
+              className="px-5 sm:px-6 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm sm:text-base transition shadow-sm shrink-0 flex items-center justify-center self-stretch"
             >
               {t.start}
             </button>
           ) : (
             /* Active chat: Skip button (color NEVER changes, only text) + Stop square button */
-            <div className="flex items-center gap-1.5 shrink-0 h-[4.75rem] sm:h-[5rem]">
+            <div className="flex items-stretch gap-1.5 shrink-0 self-stretch">
               <button
                 type="button"
                 onClick={handleSkipClick}
-                className="h-full px-4 sm:px-5 rounded-md font-bold text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0 active:scale-95 flex items-center justify-center"
+                className="px-4 sm:px-5 rounded-md font-bold text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0 active:scale-95 flex items-center justify-center"
               >
                 {isConfirmingSkip ? t.skipConfirm : t.skip}
               </button>
@@ -401,7 +401,7 @@ export default function ChatViewport({
                 }}
                 title={t.stop}
                 aria-label="Stop chat"
-                className="h-full w-11 sm:w-12 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center justify-center shrink-0 active:scale-95"
+                className="w-11 sm:w-12 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center justify-center shrink-0 active:scale-95"
               >
                 <Square className="w-3.5 h-3.5 fill-slate-700 dark:fill-slate-300" />
               </button>
@@ -409,7 +409,7 @@ export default function ChatViewport({
           )}
 
           {/* Text-Field with minimum of 3 lines */}
-          <div className="relative flex-1 flex">
+          <div className="relative flex-1 flex self-stretch">
             <textarea
               ref={textareaRef}
               rows={3}
@@ -424,7 +424,7 @@ export default function ChatViewport({
                     ? t.lookingForStranger
                     : ""
               }
-              className="w-full min-h-[4.75rem] sm:min-h-[5rem] pl-3.5 pr-11 py-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:bg-slate-50 dark:disabled:bg-slate-900/50 resize-none transition shadow-2xs leading-relaxed"
+              className="w-full h-full min-h-[4.75rem] sm:min-h-[5rem] pl-3.5 pr-11 py-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:bg-slate-50 dark:disabled:bg-slate-900/50 resize-none transition shadow-2xs leading-relaxed"
             />
 
             <button
