@@ -39,6 +39,8 @@ export interface Translations {
   noteAge: string;
   noteNoNudity: string;
   notePrivacy: string;
+  notFoundTitle: string;
+  notFoundButton: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -86,6 +88,8 @@ export const translations: Record<Language, Translations> = {
       "No nudity or explicit content — keep it friendly and just for fun.",
     notePrivacy:
       "Protect your privacy: Never share real names, passwords, phone numbers, or social accounts.",
+    notFoundTitle: "no esmiringhoy found here",
+    notFoundButton: "Go Back Home",
   },
   bisaya: {
     appName: "esmiringle",
@@ -132,5 +136,7 @@ export const translations: Record<Language, Translations> = {
       "Bawal ang law-ay o bastos — para lang sa lingaw-lingaw ug pakighigala.",
     notePrivacy:
       "Ampingi imong privacy: Ayaw ihatag imong password, phone number, o personal accounts.",
+    notFoundTitle: "hoy, walay nag esmiringhoy diri",
+    notFoundButton: "Balik sa Home",
   },
 };

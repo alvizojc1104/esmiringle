@@ -1,15 +1,47 @@
-import React from "react";
-import Link from "next/link";
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "404 - Not Found",
-  description: "Hoy, walay nag esmiringhoy diri (No esmiringhoy found here)",
-};
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { Globe } from "lucide-react";
+import { Language, translations } from "../utils/i18n";
+import { sound } from "../utils/audio";
 
 export default function NotFound() {
+  const [lang, setLang] = useState<Language>("bisaya");
+
+  useEffect(() => {
+    const savedLang = sessionStorage.getItem(
+      "esmeringle_lang",
+    ) as Language | null;
+    if (savedLang === "en" || savedLang === "bisaya") {
+      setLang(savedLang);
+    }
+  }, []);
+
+  const toggleLang = () => {
+    sound.playClickSound();
+    const nextLang: Language = lang === "bisaya" ? "en" : "bisaya";
+    setLang(nextLang);
+    sessionStorage.setItem("esmeringle_lang", nextLang);
+  };
+
+  const t = translations[lang];
+
   return (
-    <main className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-500 selection:text-white">
+    <main className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-500 selection:text-white">
+      {/* Language Switcher */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <button
+          onClick={toggleLang}
+          aria-label="Toggle language"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 transition shadow-xs"
+          title={lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"}
+        >
+          <Globe className="w-3.5 h-3.5 text-slate-500" />
+          <span>{lang === "bisaya" ? "Bisaya" : "English"}</span>
+        </button>
+      </div>
+
       <div className="flex flex-col items-center text-center max-w-md w-full">
         {/* App Logo */}
         <div className="relative mb-6 flex items-center justify-center">
@@ -27,13 +59,10 @@ export default function NotFound() {
           404 &bull; Not Found
         </span>
 
-        {/* Custom Text */}
+        {/* Single-language custom text */}
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          hoy, walay nag esmiringhoy diri
+          {t.notFoundTitle}
         </h1>
-        <p className="mt-2 text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium">
-          no esmiringhoy found here
-        </p>
 
         {/* Action Button */}
         <div className="mt-8">
@@ -41,7 +70,7 @@ export default function NotFound() {
             href="/"
             className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
           >
-            Balik sa Home / Go Back Home
+            {t.notFoundButton}
           </Link>
         </div>
       </div>
