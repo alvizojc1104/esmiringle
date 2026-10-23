@@ -20,11 +20,13 @@
 ## Getting Started
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Run the Development Server
+
 ```bash
 PORT=3005 npm run dev
 ```
@@ -32,6 +34,7 @@ PORT=3005 npm run dev
 Open [http://localhost:3005](http://localhost:3005) in your browser.
 
 ### 3. Build for Production
+
 ```bash
 npm run build
 npm start
@@ -39,4 +42,4 @@ npm start
 
 ---
 
-&copy; esmeringle 2026 | quickchow | v1.0
+&copy; esmeringle 2026 | mikealvizo.dev | v1.0
