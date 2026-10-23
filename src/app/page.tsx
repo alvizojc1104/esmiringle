@@ -72,7 +72,7 @@ export default function HomePage() {
   if (!isClient) return null;
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col justify-center sm:px-4">
+    <div className="h-[100dvh] overflow-hidden sm:h-auto sm:min-h-[100dvh] sm:overflow-visible bg-slate-50 dark:bg-slate-950 flex flex-col justify-center sm:px-4">
       <ChatViewport
         status={status}
         onlineCount={onlineCount}

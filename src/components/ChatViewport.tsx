@@ -61,15 +61,21 @@ export default function ChatViewport({
   const [isConfirmingSkip, setIsConfirmingSkip] = useState(false);
   const [showReportToast, setShowReportToast] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const skipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const t = translations[lang];
 
-  // Scroll to bottom on new messages
+  // Scroll message container to bottom on new messages without triggering window scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages, isPartnerTyping, isPartnerLeft]);
 
   // Focus textarea when matched
@@ -170,9 +176,9 @@ export default function ChatViewport({
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col h-[100dvh] sm:h-auto sm:min-h-[640px] sm:py-6 px-3 sm:px-0 justify-between select-none font-sans">
+    <div className="w-full max-w-lg mx-auto flex flex-col h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-none sm:min-h-[640px] sm:py-6 px-3 sm:px-0 justify-between font-sans overflow-hidden sm:overflow-visible">
       {/* Top Header - Umingle Style */}
-      <header className="flex items-center justify-between py-2 sm:py-3 px-1 shrink-0">
+      <header className="flex items-center justify-between py-2 sm:py-3 px-1 shrink-0 select-none">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -220,7 +226,7 @@ export default function ChatViewport({
       </header>
 
       {/* Main Umingle Card with Reduced Round Borders */}
-      <main className="relative flex-1 min-h-[380px] sm:min-h-[460px] bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden my-2">
+      <main className="relative flex-1 min-h-0 sm:min-h-[460px] bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden my-1 sm:my-2">
         {/* Red Flag Icon in Top-Right */}
         <button
           onClick={handleReport}
@@ -231,38 +237,40 @@ export default function ChatViewport({
           <Flag className="w-5 h-5 fill-rose-500/10 stroke-rose-500 stroke-[2.2]" />
         </button>
 
-        {/* Card Body - Content based on status */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 flex flex-col justify-end">
+        {/* Card Body - Standard scroll container without broken flex justify-end */}
+        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-3 sm:p-4">
           {/* STATE 1: IDLE - Umingle Welcome Card */}
           {status === "idle" && (
-            <div className="space-y-3 text-slate-900 dark:text-slate-100 my-auto sm:my-0 sm:mt-auto">
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-                {t.welcomeTitle}
-              </h2>
+            <div className="min-h-full flex flex-col justify-end">
+              <div className="space-y-3 text-slate-900 dark:text-slate-100">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                  {t.welcomeTitle}
+                </h2>
 
-              <div className="flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[11px] font-bold">
-                  18+
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
-                  {t.ageNotice}
-                </span>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[11px] font-bold">
+                    18+
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
+                    {t.ageNotice}
+                  </span>
+                </div>
 
-              <div className="space-y-1 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
-                <p>{t.ruleNoNudity}</p>
-                <p>{t.ruleCamera}</p>
-                <p>{t.ruleRespect}</p>
-                <p className="font-bold text-slate-900 dark:text-white pt-1">
-                  {t.ruleViolators}
-                </p>
+                <div className="space-y-1 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
+                  <p>{t.ruleNoNudity}</p>
+                  <p>{t.ruleCamera}</p>
+                  <p>{t.ruleRespect}</p>
+                  <p className="font-bold text-slate-900 dark:text-white pt-1">
+                    {t.ruleViolators}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
           {/* STATE 2: SEARCHING - Radar Pulse */}
           {status === "searching" && (
-            <div className="my-auto flex flex-col items-center justify-center text-center space-y-3 p-4">
+            <div className="min-h-full flex flex-col items-center justify-center text-center space-y-3 p-4">
               <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center">
                 <Radio className="w-7 h-7 text-blue-600 dark:text-blue-400 animate-pulse" />
               </div>
@@ -279,59 +287,61 @@ export default function ChatViewport({
 
           {/* STATE 3: MATCHED - Compact Transcript Log */}
           {status === "matched" && (
-            <div className="space-y-0.5 select-text w-full text-xs sm:text-[13px] leading-tight sm:leading-snug">
-              {/* Notice top banner */}
-              <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 pb-1">
-                <span>✨</span>
-                <span>{t.chattingWithSomeoneNew}</span>
-              </div>
+            <div className="min-h-full flex flex-col">
+              <div className="mt-auto space-y-0.5 select-text w-full text-xs sm:text-[13px] leading-tight sm:leading-snug">
+                {/* Notice top banner */}
+                <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 pb-1">
+                  <span>✨</span>
+                  <span>{t.chattingWithSomeoneNew}</span>
+                </div>
 
-              {/* Message transcript */}
-              {messages.map((msg) => {
-                if (msg.senderType === "system") {
+                {/* Message transcript */}
+                {messages.map((msg) => {
+                  if (msg.senderType === "system") {
+                    return (
+                      <div key={msg.id} className="font-bold text-slate-800 dark:text-slate-200 py-0.5">
+                        {msg.text}
+                      </div>
+                    );
+                  }
+
+                  const isYou = msg.senderType === "you";
                   return (
-                    <div key={msg.id} className="font-bold text-slate-800 dark:text-slate-200 py-0.5">
-                      {msg.text}
+                    <div key={msg.id} className="break-words leading-tight sm:leading-snug">
+                      <span className={`font-bold ${isYou ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>
+                        {isYou ? `${t.youLabel}: ` : `${t.strangerLabel}: `}
+                      </span>
+                      <span className="text-slate-900 dark:text-slate-100 font-normal">
+                        {msg.text}
+                      </span>
                     </div>
                   );
-                }
+                })}
 
-                const isYou = msg.senderType === "you";
-                return (
-                  <div key={msg.id} className="break-words leading-tight sm:leading-snug">
-                    <span className={`font-bold ${isYou ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>
-                      {isYou ? `${t.youLabel}: ` : `${t.strangerLabel}: `}
-                    </span>
-                    <span className="text-slate-900 dark:text-slate-100 font-normal">
-                      {msg.text}
-                    </span>
+                {/* Typing indicator */}
+                {isPartnerTyping && !isPartnerLeft && (
+                  <div className="text-slate-400 dark:text-slate-500 italic text-[11px] sm:text-xs">
+                    {t.typingStranger}
                   </div>
-                );
-              })}
+                )}
 
-              {/* Typing indicator */}
-              {isPartnerTyping && !isPartnerLeft && (
-                <div className="text-slate-400 dark:text-slate-500 italic text-[11px] sm:text-xs">
-                  {t.typingStranger}
-                </div>
-              )}
+                {/* Disconnection notice */}
+                {isPartnerLeft && (
+                  <div className="font-bold text-slate-900 dark:text-slate-100 pt-1.5">
+                    {leftReason === "skipped"
+                      ? t.strangerSkipped
+                      : t.strangerDisconnected}
+                  </div>
+                )}
 
-              {/* Disconnection notice */}
-              {isPartnerLeft && (
-                <div className="font-bold text-slate-900 dark:text-slate-100 pt-1.5">
-                  {leftReason === "skipped"
-                    ? t.strangerSkipped
-                    : t.strangerDisconnected}
-                </div>
-              )}
+                {connectionStatus === "reconnecting" && (
+                  <div className="text-amber-600 dark:text-amber-400 font-semibold pt-1">
+                    Reconnecting...
+                  </div>
+                )}
 
-              {connectionStatus === "reconnecting" && (
-                <div className="text-amber-600 dark:text-amber-400 font-semibold pt-1">
-                  Reconnecting...
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} />
+              </div>
             </div>
           )}
         </div>
