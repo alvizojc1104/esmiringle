@@ -73,6 +73,7 @@ export default function ChatPage() {
   const {
     onlineCount,
     status,
+    connectionStatus,
     partner,
     messages,
     isPartnerTyping,
@@ -121,6 +122,7 @@ export default function ChatPage() {
           isPartnerTyping={isPartnerTyping}
           isPartnerLeft={isPartnerLeft}
           leftReason={leftReason}
+          connectionStatus={connectionStatus}
           onSendMessage={sendMessage}
           onTyping={sendTyping}
           onNext={skipPartner}

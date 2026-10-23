@@ -1,4 +1,4 @@
-export type Language = "en" | "bisaya";
+export type Language = 'en' | 'bisaya';
 
 export interface Translations {
   appName: string;
@@ -15,6 +15,9 @@ export interface Translations {
   cancel: string;
   stranger: string;
   connected: string;
+  reconnecting: string;
+  disconnectedStatus: string;
+  connectionLostDesc: string;
   leave: string;
   welcomeChat: (alias: string, article: string) => string;
   typing: (alias: string) => string;
@@ -48,6 +51,9 @@ export const translations: Record<Language, Translations> = {
     cancel: "Cancel (ESC)",
     stranger: "Stranger",
     connected: "Connected",
+    reconnecting: "Reconnecting...",
+    disconnectedStatus: "Disconnected",
+    connectionLostDesc: "Connection lost (phone was locked or network disconnected). Click 'Next' to rematch.",
     leave: "Leave",
     welcomeChat: (alias, article) =>
       `You are now chatting with ${article} ${alias}. Say hi!`,
@@ -58,8 +64,7 @@ export const translations: Record<Language, Translations> = {
     findNewStranger: "Find New Stranger (ESC)",
     next: "Next",
     typePlaceholder: "Type a message... (Press Enter to send)",
-    rematchPlaceholder: (alias) =>
-      `${alias} disconnected. Click 'Next' to rematch.`,
+    rematchPlaceholder: (alias) => `${alias} disconnected. Click 'Next' to rematch.`,
     modalTitle: "Choose your alias",
     modalSubTitle: "Select how you want to be identified in chat.",
     maleLabel: "Male",
@@ -81,9 +86,11 @@ export const translations: Record<Language, Translations> = {
     cancel: "Kanselahon (ESC)",
     stranger: "Estranghero",
     connected: "Konektado",
-    leave: "Biya-e",
-    welcomeChat: (alias) =>
-      `Nakig-istorya na ka sa usa ka ${alias}. Pangumusta!`,
+    reconnecting: "Nagkonektar og balik...",
+    disconnectedStatus: "Nawala ang koneksyon",
+    connectionLostDesc: "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Sunod' para mangita og lain.",
+    leave: "Biya",
+    welcomeChat: (alias) => `Nakig-istorya na ka sa usa ka ${alias}. Pangumusta!`,
     typing: (alias) => `Nagsulat si ${alias}...`,
     partnerDisconnected: (alias) => `Nibiya na si ${alias}`,
     partnerSkipped: (alias) => `Nilayat si ${alias} sa sunod nga tawo.`,
@@ -91,12 +98,11 @@ export const translations: Record<Language, Translations> = {
     findNewStranger: "Pangita og Bag-ong Kastorya (ESC)",
     next: "Sunod",
     typePlaceholder: "Pag-type dinhi... (Pindota ang Enter aron ipadala)",
-    rematchPlaceholder: (alias) =>
-      `Nibiya si ${alias}. Pindota ang 'Sunod' para mangita og lain.`,
+    rematchPlaceholder: (alias) => `Nibiya si ${alias}. Pindota ang 'Sunod' para mangita og lain.`,
     modalTitle: "Pilia imong alias",
     modalSubTitle: "Pilia kung unsaon ka pag-ila sa chat.",
     maleLabel: "Lalaki",
     femaleLabel: "Babaye",
-    preferNotToSayLabel: "Secret lang",
+    preferNotToSayLabel: "Dili lang ko magsaba",
   },
 };

@@ -10,27 +10,79 @@ import {
 } from "../types/chat";
 import { sound } from "../utils/audio";
 
+export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
+
 export function useChatSocket(profile: UserProfile | null) {
   const socketRef = useRef<Socket | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [status, setStatus] = useState<MatchStatus>("idle");
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connected");
   const [partner, setPartner] = useState<PartnerProfile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isPartnerTyping, setIsPartnerTyping] = useState<boolean>(false);
   const [isPartnerLeft, setIsPartnerLeft] = useState<boolean>(false);
   const [leftReason, setLeftReason] = useState<"skipped" | "disconnected" | "reported" | null>(null);
 
+  // Keep refs for event callbacks to avoid stale state
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  const isPartnerLeftRef = useRef(isPartnerLeft);
+  isPartnerLeftRef.current = isPartnerLeft;
+  const hasConnectedOnceRef = useRef(false);
+
   // Initialize socket
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
     const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
     });
     socketRef.current = socket;
 
     socket.on("connect", () => {
       console.log("[SOCKET] Connected with ID:", socket.id);
+      setConnectionStatus("connected");
+
+      // If reconnecting after a disconnect while in active chat
+      if (hasConnectedOnceRef.current && statusRef.current === "matched" && !isPartnerLeftRef.current) {
+        // Query server to check if our room is still active
+        socket.emit("check-match", (res: { active: boolean }) => {
+          if (!res?.active) {
+            setIsPartnerLeft(true);
+            setLeftReason("disconnected");
+            sound.playDisconnectSound();
+          }
+        });
+      }
+      hasConnectedOnceRef.current = true;
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("[SOCKET] Disconnected, reason:", reason);
+      setConnectionStatus("disconnected");
+
+      // When phone sleeps or network drops, server cleans up room.
+      // Flag chat as disconnected immediately.
+      if (statusRef.current === "matched") {
+        setIsPartnerLeft(true);
+        setLeftReason("disconnected");
+        sound.playDisconnectSound();
+      }
+    });
+
+    socket.on("connect_error", () => {
+      setConnectionStatus("reconnecting");
+    });
+
+    socket.io.on("reconnect_attempt", () => {
+      setConnectionStatus("reconnecting");
+    });
+
+    socket.io.on("reconnect_failed", () => {
+      setConnectionStatus("disconnected");
     });
 
     socket.on("online-count", (count: number) => {
@@ -77,7 +129,53 @@ export function useChatSocket(profile: UserProfile | null) {
       }
     });
 
+    // Handle mobile phone unlock & tab focus (visibilitychange)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("[SOCKET] Page became visible, socket connected:", socket.connected);
+        if (!socket.connected) {
+          setConnectionStatus("reconnecting");
+          if (statusRef.current === "matched") {
+            setIsPartnerLeft(true);
+            setLeftReason("disconnected");
+            sound.playDisconnectSound();
+          }
+          socket.connect();
+        } else if (statusRef.current === "matched" && !isPartnerLeftRef.current) {
+          // If already connected, verify session is still active
+          socket.emit("check-match", (res: { active: boolean }) => {
+            if (!res?.active) {
+              setIsPartnerLeft(true);
+              setLeftReason("disconnected");
+              sound.playDisconnectSound();
+            }
+          });
+        }
+      }
+    };
+
+    const handleOffline = () => {
+      setConnectionStatus("disconnected");
+      if (statusRef.current === "matched") {
+        setIsPartnerLeft(true);
+        setLeftReason("disconnected");
+        sound.playDisconnectSound();
+      }
+    };
+
+    const handleOnline = () => {
+      setConnectionStatus("reconnecting");
+      socket.connect();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
       socket.disconnect();
     };
   }, []);
@@ -100,12 +198,12 @@ export function useChatSocket(profile: UserProfile | null) {
   }, []);
 
   const sendMessage = useCallback((text: string) => {
-    if (!socketRef.current || !text.trim()) return;
+    if (!socketRef.current || !text.trim() || isPartnerLeftRef.current) return;
     socketRef.current.emit("send-message", { text });
   }, []);
 
   const sendTyping = useCallback((isTyping: boolean) => {
-    if (!socketRef.current) return;
+    if (!socketRef.current || isPartnerLeftRef.current) return;
     socketRef.current.emit("typing", isTyping);
   }, []);
 
@@ -131,6 +229,7 @@ export function useChatSocket(profile: UserProfile | null) {
   return {
     onlineCount,
     status,
+    connectionStatus,
     partner,
     messages,
     isPartnerTyping,

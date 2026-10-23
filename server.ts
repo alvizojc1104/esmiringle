@@ -150,9 +150,20 @@ app.prepare().then(() => {
       socket.emit("queue-status", { status: "idle" });
     });
 
+    socket.on("check-match", (callback?: (res: { active: boolean }) => void) => {
+      const room = activeRooms.get(socket.id);
+      if (typeof callback === "function") {
+        callback({ active: !!room });
+      }
+    });
+
     socket.on("send-message", (data: { text: string }) => {
       const room = activeRooms.get(socket.id);
-      if (!room || !data.text || !data.text.trim()) return;
+      if (!room) {
+        socket.emit("partner-left", { reason: "disconnected" });
+        return;
+      }
+      if (!data.text || !data.text.trim()) return;
 
       const message = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,

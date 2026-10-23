@@ -27,6 +27,7 @@ interface ChatViewportProps {
   isPartnerTyping: boolean;
   isPartnerLeft: boolean;
   leftReason?: "skipped" | "disconnected" | "reported" | null;
+  connectionStatus?: "connected" | "reconnecting" | "disconnected";
   onSendMessage: (text: string) => void;
   onTyping: (isTyping: boolean) => void;
   onNext: () => void;
@@ -43,6 +44,7 @@ export default function ChatViewport({
   isPartnerTyping,
   isPartnerLeft,
   leftReason,
+  connectionStatus = "connected",
   onSendMessage,
   onTyping,
   onNext,
@@ -136,10 +138,26 @@ export default function ChatViewport({
             <div className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
               <span>{partnerAlias}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{t.connected}</span>
-            </div>
+            {connectionStatus === "reconnecting" ? (
+              <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                <span>{t.reconnecting}</span>
+              </div>
+            ) : connectionStatus === "disconnected" || isPartnerLeft ? (
+              <div className="flex items-center gap-1.5 text-[11px] text-rose-500 dark:text-rose-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>
+                  {isPartnerLeft && leftReason === "skipped"
+                    ? (lang === "bisaya" ? "Ni-skip ang ka-chat" : "Partner skipped")
+                    : t.disconnectedStatus}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{t.connected}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -236,7 +254,7 @@ export default function ChatViewport({
           </div>
         )}
 
-        {/* Stranger disconnected callout */}
+        {/* Stranger disconnected or Connection lost callout */}
         {isPartnerLeft && (
           <div className="my-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center max-w-sm mx-auto space-y-3">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 mx-auto flex items-center justify-center">
@@ -244,12 +262,16 @@ export default function ChatViewport({
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                {t.partnerDisconnected(partnerAlias)}
+                {leftReason === "disconnected"
+                  ? (lang === "bisaya" ? "Nawad-an og koneksyon" : "Connection lost")
+                  : t.partnerDisconnected(partnerAlias)}
               </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {leftReason === "skipped"
-                  ? t.partnerSkipped(partnerAlias)
-                  : t.connectionEnded}
+              <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                {leftReason === "disconnected"
+                  ? t.connectionLostDesc
+                  : leftReason === "skipped"
+                    ? t.partnerSkipped(partnerAlias)
+                    : t.connectionEnded}
               </p>
             </div>
             <button
@@ -290,18 +312,22 @@ export default function ChatViewport({
             type="text"
             value={inputText}
             onChange={handleInputChange}
-            disabled={isPartnerLeft}
+            disabled={isPartnerLeft || connectionStatus !== "connected"}
             placeholder={
-              isPartnerLeft
-                ? t.rematchPlaceholder(partnerAlias)
-                : t.typePlaceholder
+              connectionStatus === "reconnecting"
+                ? t.reconnecting
+                : isPartnerLeft
+                  ? (leftReason === "disconnected"
+                      ? (lang === "bisaya" ? "Nawala ang koneksyon. Pindota ang Sunod..." : "Disconnected. Click Next to rematch...")
+                      : t.rematchPlaceholder(partnerAlias))
+                  : t.typePlaceholder
             }
             className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
           />
 
           <button
             type="submit"
-            disabled={!inputText.trim() || isPartnerLeft}
+            disabled={!inputText.trim() || isPartnerLeft || connectionStatus !== "connected"}
             aria-label="Send message"
             className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white transition shadow-sm shrink-0"
           >
