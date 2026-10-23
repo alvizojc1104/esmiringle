@@ -1,4 +1,4 @@
-export type Language = 'en' | 'bisaya';
+export type Language = "en" | "bisaya";
 
 export interface Translations {
   appName: string;
@@ -59,7 +59,8 @@ export const translations: Record<Language, Translations> = {
     connected: "Connected",
     reconnecting: "Reconnecting...",
     disconnectedStatus: "Disconnected",
-    connectionLostDesc: "Connection lost (phone was locked or network disconnected). Click 'Skip' to rematch.",
+    connectionLostDesc:
+      "Connection lost (phone was locked or network disconnected). Click 'Skip' to rematch.",
     leave: "Leave",
     welcomeChat: (alias, article) =>
       `You are now chatting with ${article} ${alias}. Say hi!`,
@@ -71,7 +72,8 @@ export const translations: Record<Language, Translations> = {
     skip: "Skip",
     next: "Skip",
     typePlaceholder: "Type a message... (Press Enter to send)",
-    rematchPlaceholder: (alias) => `${alias} disconnected. Click 'Skip' to rematch.`,
+    rematchPlaceholder: (alias) =>
+      `${alias} disconnected. Click 'Skip' to rematch.`,
     rateLimitWarning: "You are sending messages too fast! Please slow down.",
     modalTitle: "Choose your alias",
     modalSubTitle: "Select how you want to be identified in chat.",
@@ -80,8 +82,10 @@ export const translations: Record<Language, Translations> = {
     preferNotToSayLabel: "Prefer not to say",
     communityNotesTitle: "Community Guidelines & Safety",
     noteAge: "18+ Only: You must be at least 18 years old to use esmeringle.",
-    noteNoNudity: "No nudity or explicit content — keep it friendly and just for fun.",
-    notePrivacy: "Protect your privacy: Never share real names, passwords, phone numbers, or social accounts.",
+    noteNoNudity:
+      "No nudity or explicit content — keep it friendly and just for fun.",
+    notePrivacy:
+      "Protect your privacy: Never share real names, passwords, phone numbers, or social accounts.",
   },
   bisaya: {
     appName: "esmeringle",
@@ -100,9 +104,11 @@ export const translations: Record<Language, Translations> = {
     connected: "Konektado",
     reconnecting: "Nagkonektar og balik...",
     disconnectedStatus: "Nawala ang koneksyon",
-    connectionLostDesc: "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Skip' para mangita og lain.",
+    connectionLostDesc:
+      "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Skip' para mangita og lain.",
     leave: "Biya",
-    welcomeChat: (alias) => `Nakig-istorya na ka sa usa ka ${alias}. Pangumusta!`,
+    welcomeChat: (alias) =>
+      `Nakig-istorya na ka sa usa ka ${alias}. Pangumusta!`,
     typing: (alias) => `Nagsulat si ${alias}...`,
     partnerDisconnected: (alias) => `Nibiya na si ${alias}`,
     partnerSkipped: (alias) => `Ni-skip si ${alias} sa sunod nga tawo.`,
@@ -111,16 +117,20 @@ export const translations: Record<Language, Translations> = {
     skip: "Skip",
     next: "Skip",
     typePlaceholder: "Pag-type dinhi... (Pindota ang Enter aron ipadala)",
-    rematchPlaceholder: (alias) => `Nibiya si ${alias}. Pindota ang 'Skip' para mangita og lain.`,
+    rematchPlaceholder: (alias) =>
+      `Nibiya si ${alias}. Pindota ang 'Skip' para mangita og lain.`,
     rateLimitWarning: "Paspas ra kaayo imong pag-chat! Hinay-hinay lang usa.",
     modalTitle: "Pilia imong alias",
     modalSubTitle: "Pilia kung unsaon ka pag-ila sa chat.",
     maleLabel: "Lalaki",
     femaleLabel: "Babaye",
-    preferNotToSayLabel: "Dili lang ko magsaba",
+    preferNotToSayLabel: "Secret",
     communityNotesTitle: "Mga Pahimangno ug Kaluwasan",
-    noteAge: "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmeringle.",
-    noteNoNudity: "Bawal ang law-ay o bastos — para lang sa lingaw-lingaw ug pakighigala.",
-    notePrivacy: "Ampingi imong privacy: Ayaw ihatag imong password, phone number, o personal accounts.",
+    noteAge:
+      "18+ Lamang: Kinahanglan 18 anyos pataas para mogamit sa esmeringle.",
+    noteNoNudity:
+      "Bawal ang law-ay o bastos — para lang sa lingaw-lingaw ug pakighigala.",
+    notePrivacy:
+      "Ampingi imong privacy: Ayaw ihatag imong password, phone number, o personal accounts.",
   },
 };

@@ -1,12 +1,15 @@
 {
   "name": "esmeringle",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "dev": "tsx server.ts",
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "bump": "node scripts/bump-version.js patch",
+    "bump:minor": "node scripts/bump-version.js minor",
+    "bump:major": "node scripts/bump-version.js major"
   },
   "dependencies": {
     "clsx": "^2.1.1",

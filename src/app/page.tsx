@@ -8,6 +8,7 @@ import { useChatSocket } from "../hooks/useChatSocket";
 import OnboardingModal from "../components/OnboardingModal";
 import { Sun, Moon, MessageSquare, Globe, ShieldAlert } from "lucide-react";
 import { sound } from "../utils/audio";
+import { APP_VERSION } from "../utils/version";
 
 export default function HomePage() {
   const router = useRouter();
@@ -282,7 +283,7 @@ export default function HomePage() {
 
       {/* Watermarked Footer with App Versioning */}
       <footer className="w-full border-t border-slate-200 dark:border-slate-800 py-3.5 text-center text-xs text-slate-400 dark:text-slate-500">
-        <span>&copy; esmeringle 2026 | quickchow | v1.0</span>
+        <span>&copy; esmeringle 2026 | quickchow | {APP_VERSION}</span>
       </footer>
     </div>
   );
