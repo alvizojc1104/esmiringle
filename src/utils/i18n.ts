@@ -25,6 +25,7 @@ export interface Translations {
   partnerSkipped: (alias: string) => string;
   connectionEnded: string;
   findNewStranger: string;
+  skip: string;
   next: string;
   typePlaceholder: string;
   rematchPlaceholder: (alias: string) => string;
@@ -45,7 +46,7 @@ export const translations: Record<Language, Translations> = {
     chattingAs: "Chatting as:",
     change: "Change",
     startChat: "Start Chat",
-    escTip: "Press ESC to skip to the next person anytime.",
+    escTip: "Press ESC to skip anytime.",
     lookingForStranger: "Looking for a stranger...",
     connectingOnline: "Connecting you with someone online on esmeringle.",
     cancel: "Cancel (ESC)",
@@ -53,7 +54,7 @@ export const translations: Record<Language, Translations> = {
     connected: "Connected",
     reconnecting: "Reconnecting...",
     disconnectedStatus: "Disconnected",
-    connectionLostDesc: "Connection lost (phone was locked or network disconnected). Click 'Next' to rematch.",
+    connectionLostDesc: "Connection lost (phone was locked or network disconnected). Click 'Skip' to rematch.",
     leave: "Leave",
     welcomeChat: (alias, article) =>
       `You are now chatting with ${article} ${alias}. Say hi!`,
@@ -61,10 +62,11 @@ export const translations: Record<Language, Translations> = {
     partnerDisconnected: (alias) => `${alias} has disconnected`,
     partnerSkipped: (alias) => `${alias} skipped to the next person.`,
     connectionEnded: "The connection ended.",
-    findNewStranger: "Find New Stranger (ESC)",
-    next: "Next",
+    findNewStranger: "Skip / Find New Stranger (ESC)",
+    skip: "Skip",
+    next: "Skip",
     typePlaceholder: "Type a message... (Press Enter to send)",
-    rematchPlaceholder: (alias) => `${alias} disconnected. Click 'Next' to rematch.`,
+    rematchPlaceholder: (alias) => `${alias} disconnected. Click 'Skip' to rematch.`,
     modalTitle: "Choose your alias",
     modalSubTitle: "Select how you want to be identified in chat.",
     maleLabel: "Male",
@@ -80,7 +82,7 @@ export const translations: Record<Language, Translations> = {
     chattingAs: "Nag-chat isip:",
     change: "Ilisi",
     startChat: "Sugdi ang Chat",
-    escTip: "Pindota ang ESC para molayat sa sunod nga tawo bisan kanus-a.",
+    escTip: "Pindota ang ESC para mo-skip bisan kanus-a.",
     lookingForStranger: "Nangita og kastorya...",
     connectingOnline: "Gikonektar ka sa usa ka tawo sa esmeringle.",
     cancel: "Kanselahon (ESC)",
@@ -88,17 +90,18 @@ export const translations: Record<Language, Translations> = {
     connected: "Konektado",
     reconnecting: "Nagkonektar og balik...",
     disconnectedStatus: "Nawala ang koneksyon",
-    connectionLostDesc: "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Sunod' para mangita og lain.",
+    connectionLostDesc: "Nawala ang koneksyon (basin na-lock ang screen o nawala ang net). Pindota ang 'Skip' para mangita og lain.",
     leave: "Biya",
     welcomeChat: (alias) => `Nakig-istorya na ka sa usa ka ${alias}. Pangumusta!`,
     typing: (alias) => `Nagsulat si ${alias}...`,
     partnerDisconnected: (alias) => `Nibiya na si ${alias}`,
-    partnerSkipped: (alias) => `Nilayat si ${alias} sa sunod nga tawo.`,
+    partnerSkipped: (alias) => `Ni-skip si ${alias} sa sunod nga tawo.`,
     connectionEnded: "Naundang na ang inyong istorya.",
-    findNewStranger: "Pangita og Bag-ong Kastorya (ESC)",
-    next: "Sunod",
+    findNewStranger: "Skip / Pangita og Bag-ong Kastorya (ESC)",
+    skip: "Skip",
+    next: "Skip",
     typePlaceholder: "Pag-type dinhi... (Pindota ang Enter aron ipadala)",
-    rematchPlaceholder: (alias) => `Nibiya si ${alias}. Pindota ang 'Sunod' para mangita og lain.`,
+    rematchPlaceholder: (alias) => `Nibiya si ${alias}. Pindota ang 'Skip' para mangita og lain.`,
     modalTitle: "Pilia imong alias",
     modalSubTitle: "Pilia kung unsaon ka pag-ila sa chat.",
     maleLabel: "Lalaki",

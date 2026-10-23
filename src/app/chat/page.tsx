@@ -125,6 +125,7 @@ export default function ChatPage() {
           connectionStatus={connectionStatus}
           onSendMessage={sendMessage}
           onTyping={sendTyping}
+          onSkip={skipPartner}
           onNext={skipPartner}
           onStop={handleStop}
           lang={lang}

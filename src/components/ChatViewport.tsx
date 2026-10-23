@@ -30,7 +30,8 @@ interface ChatViewportProps {
   connectionStatus?: "connected" | "reconnecting" | "disconnected";
   onSendMessage: (text: string) => void;
   onTyping: (isTyping: boolean) => void;
-  onNext: () => void;
+  onSkip?: () => void;
+  onNext?: () => void;
   onStop: () => void;
   lang?: Language;
   onToggleLang?: () => void;
@@ -47,6 +48,7 @@ export default function ChatViewport({
   connectionStatus = "connected",
   onSendMessage,
   onTyping,
+  onSkip,
   onNext,
   onStop,
   lang = "bisaya",
@@ -54,6 +56,7 @@ export default function ChatViewport({
   onToggleTheme,
   isDarkMode,
 }: ChatViewportProps) {
+  const handleSkip = onSkip || onNext || (() => {});
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -81,12 +84,12 @@ export default function ChatViewport({
       if (e.key === "Escape") {
         e.preventDefault();
         sound.playClickSound();
-        onNext();
+        handleSkip();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onNext]);
+  }, [handleSkip]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -275,10 +278,10 @@ export default function ChatViewport({
               </p>
             </div>
             <button
-              onClick={onNext}
+              onClick={handleSkip}
               className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center gap-1.5 mx-auto shadow-sm"
             >
-              <span className="sm:hidden">{lang === "bisaya" ? "Pangita og Bag-ong Kastorya" : "Find New Stranger"}</span>
+              <span className="sm:hidden">{lang === "bisaya" ? "Skip / Pangitag Lain" : "Skip Stranger"}</span>
               <span className="hidden sm:inline">{t.findNewStranger}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -293,7 +296,7 @@ export default function ChatViewport({
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <button
             type="button"
-            onClick={onNext}
+            onClick={handleSkip}
             className={`px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wide transition flex items-center gap-1 shrink-0 ${
               isPartnerLeft
                 ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
@@ -301,7 +304,7 @@ export default function ChatViewport({
             }`}
           >
             <FastForward className="w-3.5 h-3.5" />
-            <span>{t.next}</span>
+            <span>{t.skip}</span>
             <kbd className="hidden sm:inline-block ml-1 px-1 rounded bg-black/10 dark:bg-white/10 text-[10px]">
               ESC
             </kbd>
@@ -318,7 +321,7 @@ export default function ChatViewport({
                 ? t.reconnecting
                 : isPartnerLeft
                   ? (leftReason === "disconnected"
-                      ? (lang === "bisaya" ? "Nawala ang koneksyon. Pindota ang Sunod..." : "Disconnected. Click Next to rematch...")
+                      ? (lang === "bisaya" ? "Nawala ang koneksyon. Pindota ang Skip..." : "Disconnected. Click Skip to rematch...")
                       : t.rematchPlaceholder(partnerAlias))
                   : t.typePlaceholder
             }
