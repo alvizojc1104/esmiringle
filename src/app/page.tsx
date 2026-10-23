@@ -107,9 +107,17 @@ export default function HomePage() {
       <header className="w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40 transition-colors">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-100 lowercase">
-              {t.appName}
-            </span>
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/android-chrome-192x192.png"
+                alt="esmeringle logo"
+                className="w-6 h-6 rounded-md object-contain shadow-xs"
+              />
+              <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-100 lowercase">
+                {t.appName}
+              </span>
+            </div>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>{onlineCount || 1}</span>
