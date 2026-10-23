@@ -115,51 +115,59 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Clean Navbar */}
-      <header className="w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40 transition-colors">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-100 lowercase">
-              {t.appName}
-            </span>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>
-                {onlineCount || 1} {t.online}
+      {/* Clean Navbar - Hidden during active chat session */}
+      {status !== "matched" && (
+        <header className="w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40 transition-colors">
+          <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-100 lowercase">
+                {t.appName}
               </span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>
+                  {onlineCount || 1} {t.online}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLang}
+                aria-label="Toggle language"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
+                title={lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"}
+              >
+                <Globe className="w-3.5 h-3.5 text-slate-500" />
+                <span>{lang === "bisaya" ? "Bisaya" : "English"}</span>
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                {isDarkMode ? (
+                  <Sun className="w-4 h-4" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
+        </header>
+      )}
 
-          <div className="flex items-center gap-2">
-            {/* Language Toggle */}
-            <button
-              onClick={toggleLang}
-              aria-label="Toggle language"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
-              title={lang === "en" ? "Switch to Bisaya" : "Switch to English"}
-            >
-              <Globe className="w-3.5 h-3.5 text-slate-500" />
-              <span>{lang === "en" ? "English" : "Bisaya"}</span>
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              {isDarkMode ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col justify-center">
+      {/* Main Container - Full viewport on mobile when matched */}
+      <main
+        className={`flex-1 w-full flex flex-col justify-center ${
+          status === "matched"
+            ? "p-0 sm:p-4 max-w-full sm:max-w-4xl mx-auto"
+            : "max-w-4xl mx-auto p-4"
+        }`}
+      >
         {status === "idle" && (
           <div className="max-w-lg mx-auto w-full py-12 text-center animate-in fade-in duration-150">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
@@ -272,6 +280,9 @@ export default function HomePage() {
             onNext={skipPartner}
             onStop={stopChat}
             lang={lang}
+            onToggleLang={toggleLang}
+            onToggleTheme={toggleTheme}
+            isDarkMode={isDarkMode}
           />
         )}
       </main>
@@ -287,10 +298,12 @@ export default function HomePage() {
         lang={lang}
       />
 
-      {/* Watermarked Footer with App Versioning */}
-      <footer className="w-full border-t border-slate-200 dark:border-slate-800 py-3.5 text-center text-xs text-slate-400 dark:text-slate-500">
-        <span>&copy; esmeringle 2026 | mikealvizo.dev | v1.0</span>
-      </footer>
+      {/* Watermarked Footer with App Versioning - Hidden during active chat session */}
+      {status !== "matched" && (
+        <footer className="w-full border-t border-slate-200 dark:border-slate-800 py-3.5 text-center text-xs text-slate-400 dark:text-slate-500">
+          <span>&copy; esmeringle 2026 | quickchow | v1.0</span>
+        </footer>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChatMessage, PartnerProfile, UserProfile, GENDER_ALIASES } from "../types/chat";
 import { Language, translations } from "../utils/i18n";
-import { Send, FastForward, Slash, ArrowRight } from "lucide-react";
+import { Send, FastForward, Slash, ArrowRight, ArrowLeft, Globe, Sun, Moon } from "lucide-react";
 import { sound } from "../utils/audio";
 
 interface ChatViewportProps {
@@ -18,6 +18,9 @@ interface ChatViewportProps {
   onNext: () => void;
   onStop: () => void;
   lang?: Language;
+  onToggleLang?: () => void;
+  onToggleTheme?: () => void;
+  isDarkMode?: boolean;
 }
 
 export default function ChatViewport({
@@ -31,6 +34,9 @@ export default function ChatViewport({
   onNext,
   onStop,
   lang = "bisaya",
+  onToggleLang,
+  onToggleTheme,
+  isDarkMode,
 }: ChatViewportProps) {
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -87,31 +93,62 @@ export default function ChatViewport({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6.5rem)] max-w-3xl mx-auto w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-      {/* Top Banner */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">
+    <div className="flex flex-col h-[100dvh] sm:h-[calc(100vh-4rem)] max-w-3xl mx-auto w-full sm:rounded-2xl bg-white dark:bg-slate-900 sm:border sm:border-slate-200 sm:dark:border-slate-800 sm:shadow-sm overflow-hidden transition-colors">
+      {/* Messenger-style Top Header */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm sticky top-0 z-30 shrink-0">
+        {/* Left: Back Button + Avatar + Alias */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <button
+            onClick={() => {
+              sound.playClickSound();
+              onStop();
+            }}
+            title={t.leave}
+            aria-label="Back"
+            className="p-1.5 -ml-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <span className="text-2xl select-none">
             {partner.gender === "male" ? "👨" : partner.gender === "female" ? "👩" : "👤"}
           </span>
-          <div>
-            <div className="font-bold text-sm text-slate-900 dark:text-slate-100">
-              {partnerAlias}
+
+          <div className="leading-tight">
+            <div className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+              <span>{partnerAlias}</span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>{t.connected}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onStop}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium transition"
-          >
-            {t.leave}
-          </button>
+        {/* Right: Language, Theme & Leave controls */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {onToggleLang && (
+            <button
+              onClick={onToggleLang}
+              aria-label="Toggle language"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition"
+              title={lang === "bisaya" ? "Switch to English" : "Switch to Bisaya"}
+            >
+              <Globe className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">{lang === "bisaya" ? "Bisaya" : "English"}</span>
+              <span className="sm:hidden">{lang === "bisaya" ? "CEB" : "EN"}</span>
+            </button>
+          )}
+
+          {onToggleTheme && (
+            <button
+              onClick={onToggleTheme}
+              aria-label="Toggle theme"
+              className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          )}
         </div>
       </div>
 
@@ -144,7 +181,7 @@ export default function ChatViewport({
               className={`flex flex-col ${isYou ? "items-end" : "items-start"}`}
             >
               <div
-                className={`max-w-[80%] sm:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                className={`max-w-[85%] sm:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                   isYou
                     ? "bg-blue-600 text-white rounded-br-xs shadow-xs"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 rounded-bl-xs"
@@ -198,8 +235,8 @@ export default function ChatViewport({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input bar */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+      {/* Input bar - pinned cleanly at the bottom */}
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky bottom-0 z-20 shrink-0">
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <button
             type="button"
@@ -224,12 +261,13 @@ export default function ChatViewport({
             onChange={handleInputChange}
             disabled={isPartnerLeft}
             placeholder={isPartnerLeft ? t.rematchPlaceholder(partnerAlias) : t.typePlaceholder}
-            className="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
+            className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
           />
 
           <button
             type="submit"
             disabled={!inputText.trim() || isPartnerLeft}
+            aria-label="Send message"
             className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white transition shadow-sm shrink-0"
           >
             <Send className="w-4 h-4" />
