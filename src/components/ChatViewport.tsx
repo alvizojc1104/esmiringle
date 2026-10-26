@@ -11,7 +11,6 @@ import {
 import { Language, translations } from "../utils/i18n";
 import {
   Send,
-  FastForward,
   Slash,
   ArrowRight,
   ArrowLeft,
@@ -71,15 +70,60 @@ export default function ChatViewport({
   }, [onSkip, onNext]);
 
   const [inputText, setInputText] = useState("");
+  const [isConfirmingSkip, setIsConfirmingSkip] = useState(false);
   const [isCharLimitModalOpen, setIsCharLimitModalOpen] = useState(false);
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const skipConfirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const t = translations[lang];
   const partnerAlias = GENDER_ALIASES[partner.gender] || "Stranger";
   const article = partner.gender === "male" ? "a" : "an";
+
+  const resetSkipConfirm = useCallback(() => {
+    setIsConfirmingSkip(false);
+    if (skipConfirmTimeoutRef.current) {
+      clearTimeout(skipConfirmTimeoutRef.current);
+      skipConfirmTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Reset confirmation state on partner/room change or unmount
+  useEffect(() => {
+    resetSkipConfirm();
+    return () => {
+      if (skipConfirmTimeoutRef.current) {
+        clearTimeout(skipConfirmTimeoutRef.current);
+      }
+    };
+  }, [partner.roomId, resetSkipConfirm]);
+
+  const handleSkipRequest = useCallback(() => {
+    // If partner already left, skip immediately
+    if (isPartnerLeft) {
+      resetSkipConfirm();
+      handleSkip();
+      return;
+    }
+
+    // If already in confirming state ("Sure?"), execute the skip
+    if (isConfirmingSkip) {
+      resetSkipConfirm();
+      handleSkip();
+    } else {
+      // First click: prompt "Sure?"
+      sound.playClickSound();
+      setIsConfirmingSkip(true);
+      if (skipConfirmTimeoutRef.current) {
+        clearTimeout(skipConfirmTimeoutRef.current);
+      }
+      skipConfirmTimeoutRef.current = setTimeout(() => {
+        setIsConfirmingSkip(false);
+      }, 4000);
+    }
+  }, [isPartnerLeft, isConfirmingSkip, handleSkip, resetSkipConfirm]);
 
   // Focus input on mount or partner change
   useEffect(() => {
@@ -99,18 +143,17 @@ export default function ChatViewport({
     }
   }, [isPartnerTyping, isPartnerLeft]);
 
-  // ESC shortcut to skip
+  // ESC shortcut to skip with confirmation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        sound.playClickSound();
-        handleSkip();
+        handleSkipRequest();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSkip]);
+  }, [handleSkipRequest]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -389,15 +432,14 @@ export default function ChatViewport({
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleSkip}
-            className={`px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wide transition flex items-center gap-1 shrink-0 ${
+            onClick={handleSkipRequest}
+            className={`px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wide transition flex items-center justify-center gap-1 shrink-0 ${
               isPartnerLeft
                 ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                 : "bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
             }`}
           >
-            <FastForward className="w-3.5 h-3.5" />
-            <span>{t.skip}</span>
+            <span>{isConfirmingSkip ? "Sure?" : t.skip}</span>
             <kbd className="hidden sm:inline-block ml-1 px-1 rounded bg-black/10 dark:bg-white/10 text-[10px]">
               ESC
             </kbd>
