@@ -28,6 +28,7 @@ export default function MatchmakingRadar({ profile, onlineCount, onCancel, lang 
   }, [onCancel]);
 
   const myAlias = GENDER_ALIASES[profile.gender] || profile.gender;
+  const displayOnline = Math.max(0, onlineCount - 1);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center select-none animate-in fade-in duration-150">
@@ -38,16 +39,30 @@ export default function MatchmakingRadar({ profile, onlineCount, onCancel, lang 
       <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">
         {t.lookingForStranger}
       </h3>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-        {t.connectingOnline}
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+        {displayOnline === 0 ? t.waitingForOthers : t.connectingOnline}
       </p>
 
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300 mb-6">
-        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-        <span>{onlineCount || 1} {t.online}</span>
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300 mb-3">
+        <span
+          className={`w-2 h-2 rounded-full ${
+            displayOnline > 0 ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+          }`}
+        />
+        <span>
+          {displayOnline} {t.online}
+        </span>
         <span>•</span>
-        <span>{t.chattingAs} <strong>{myAlias}</strong></span>
+        <span>
+          {t.chattingAs} <strong>{myAlias}</strong>
+        </span>
       </div>
+
+      {displayOnline === 0 && (
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-xs mb-5 leading-relaxed">
+          {t.aloneHint}
+        </p>
+      )}
 
       <button
         onClick={onCancel}

@@ -47,6 +47,8 @@ export interface Translations {
   charLimitEditBtn: string;
   charLimitBadge: (over: number) => string;
   newMessagesBelow: string;
+  waitingForOthers: string;
+  aloneHint: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -103,6 +105,9 @@ export const translations: Record<Language, Translations> = {
     charLimitEditBtn: "Edit Message",
     charLimitBadge: (over) => `+${over.toLocaleString()} characters over limit`,
     newMessagesBelow: "New messages below",
+    waitingForOthers: "Waiting for someone to join...",
+    aloneHint:
+      "You're the only one online right now. Hang tight or share the link with a friend!",
   },
   bisaya: {
     appName: "esmiringle",
@@ -158,5 +163,8 @@ export const translations: Record<Language, Translations> = {
     charLimitEditBtn: "Usba ang Mensahe",
     charLimitBadge: (over) => `+${over.toLocaleString()} ka letra nisobra sa limit`,
     newMessagesBelow: "Bag-ong mga mensahe sa ubos",
+    waitingForOthers: "Nagpaabot og naay mosulod...",
+    aloneHint:
+      "Ikaw pa'y nag-inusarang online karon. Paabot lang gamay o i-share ang link sa higala!",
   },
 };

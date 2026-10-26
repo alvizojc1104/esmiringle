@@ -120,8 +120,16 @@ export default function HomePage() {
               </span>
             </div>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{onlineCount || 1}</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  Math.max(0, onlineCount - 1) > 0
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-slate-400"
+                }`}
+              />
+              <span>
+                {Math.max(0, onlineCount - 1)} {t.online}
+              </span>
             </div>
           </div>
 

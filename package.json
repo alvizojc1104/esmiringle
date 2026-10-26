@@ -1,6 +1,6 @@
 {
   "name": "esmeringle",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "private": true,
   "scripts": {
     "dev": "tsx server.ts",
