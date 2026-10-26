@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import {
   ChatMessage,
   PartnerProfile,
@@ -20,7 +21,6 @@ import {
   Moon,
 } from "lucide-react";
 import { sound } from "../utils/audio";
-import { useVirtualizedChat } from "../hooks/useVirtualizedChat";
 import CharLimitModal from "./CharLimitModal";
 
 interface ChatViewportProps {
@@ -72,39 +72,32 @@ export default function ChatViewport({
 
   const [inputText, setInputText] = useState("");
   const [isCharLimitModalOpen, setIsCharLimitModalOpen] = useState(false);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const t = translations[lang];
   const partnerAlias = GENDER_ALIASES[partner.gender] || "Stranger";
   const article = partner.gender === "male" ? "a" : "an";
 
-  // Virtualized chat scroll engine
-  const {
-    containerRef,
-    messagesEndRef,
-    visibleMessages,
-    topSpacerHeight,
-    bottomSpacerHeight,
-    measureItem,
-    handleScroll,
-    scrollToBottom,
-    showScrollBottomBtn,
-  } = useVirtualizedChat({ messages });
-
-  // Scroll to bottom when partner types or disconnects
-  useEffect(() => {
-    if (isPartnerTyping || isPartnerLeft) {
-      scrollToBottom(true);
-    }
-  }, [isPartnerTyping, isPartnerLeft, scrollToBottom]);
-
-  // Focus input
+  // Focus input on mount or partner change
   useEffect(() => {
     if (!isPartnerLeft) {
       inputRef.current?.focus();
     }
   }, [isPartnerLeft, partner.roomId]);
+
+  // Scroll to bottom when partner types or disconnects
+  useEffect(() => {
+    if (isPartnerTyping || isPartnerLeft) {
+      virtuosoRef.current?.scrollToIndex({
+        index: "LAST",
+        align: "end",
+        behavior: "smooth",
+      });
+    }
+  }, [isPartnerTyping, isPartnerLeft]);
 
   // ESC shortcut to skip
   useEffect(() => {
@@ -150,6 +143,15 @@ export default function ChatViewport({
     setIsCharLimitModalOpen(false);
     inputRef.current?.focus();
   };
+
+  const scrollToBottom = useCallback(() => {
+    virtuosoRef.current?.scrollToIndex({
+      index: "LAST",
+      align: "end",
+      behavior: "smooth",
+    });
+    setShowScrollBottomBtn(false);
+  }, []);
 
   return (
     <div className="flex flex-col h-full sm:h-[calc(100vh-4rem)] max-w-3xl mx-auto w-full sm:rounded-2xl bg-white dark:bg-slate-900 sm:border sm:border-slate-200 sm:dark:border-slate-800 sm:shadow-sm overflow-hidden transition-colors relative">
@@ -241,35 +243,77 @@ export default function ChatViewport({
         </div>
       </div>
 
-      {/* Virtualized Messages Scroll Area */}
-      <div
-        ref={containerRef}
-        onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 relative"
-      >
-        {/* Welcome banner at top */}
-        <div className="text-center my-2">
-          <span className="inline-block px-3 py-1 rounded-full text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            {t.welcomeChat(partnerAlias, article)}
-          </span>
-        </div>
+      {/* react-virtuoso Virtualized Message Viewport */}
+      <div className="flex-1 min-h-0 w-full relative">
+        <Virtuoso
+          ref={virtuosoRef}
+          data={messages}
+          className="h-full w-full"
+          atBottomThreshold={80}
+          atBottomStateChange={(atBottom) => {
+            setShowScrollBottomBtn(!atBottom);
+          }}
+          followOutput={(isAtBottom) => (isAtBottom ? "smooth" : false)}
+          components={{
+            Header: () => (
+              <div className="text-center my-3 px-4 select-none">
+                <span className="inline-block px-3 py-1 rounded-full text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  {t.welcomeChat(partnerAlias, article)}
+                </span>
+              </div>
+            ),
+            Footer: () => (
+              <div className="pb-3 px-4">
+                {/* Typing indicator */}
+                {isPartnerTyping && !isPartnerLeft && (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 px-1 py-1 mt-2">
+                    <span>{t.typing(partnerAlias)}</span>
+                    <span className="flex space-x-0.5">
+                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" />
+                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce delay-150" />
+                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce delay-300" />
+                    </span>
+                  </div>
+                )}
 
-        {/* Virtual spacer above visible window */}
-        {topSpacerHeight > 0 && (
-          <div style={{ height: `${topSpacerHeight}px` }} aria-hidden="true" />
-        )}
-
-        {/* Visible Messages */}
-        <div className="space-y-3.5">
-          {visibleMessages.map((msg) => {
+                {/* Stranger disconnected callout */}
+                {isPartnerLeft && (
+                  <div className="my-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center max-w-sm mx-auto space-y-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 mx-auto flex items-center justify-center">
+                      <Slash className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        {leftReason === "disconnected"
+                          ? (lang === "bisaya" ? "Nawad-an og koneksyon" : "Connection lost")
+                          : t.partnerDisconnected(partnerAlias)}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                        {leftReason === "disconnected"
+                          ? t.connectionLostDesc
+                          : leftReason === "skipped"
+                            ? t.partnerSkipped(partnerAlias)
+                            : t.connectionEnded}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleSkip}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center gap-1.5 mx-auto shadow-sm"
+                    >
+                      <span className="sm:hidden">{lang === "bisaya" ? "Skip / Pangitag Lain" : "Skip Stranger"}</span>
+                      <span className="hidden sm:inline">{t.findNewStranger}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ),
+          }}
+          itemContent={(index, msg) => {
             if (msg.senderType === "system") {
               const isWarning = msg.text.startsWith("⚠️");
               return (
-                <div
-                  key={msg.id}
-                  ref={(el) => measureItem(msg.id, el)}
-                  className="text-center my-2"
-                >
+                <div className="text-center my-2 px-4 sm:px-5">
                   <span
                     className={`inline-block px-3 py-1.5 rounded-full text-xs ${
                       isWarning
@@ -291,9 +335,7 @@ export default function ChatViewport({
 
             return (
               <div
-                key={msg.id}
-                ref={(el) => measureItem(msg.id, el)}
-                className={`flex flex-col ${isYou ? "items-end" : "items-start"}`}
+                className={`flex flex-col py-1.5 px-4 sm:px-5 ${isYou ? "items-end" : "items-start"}`}
               >
                 <div
                   className={`max-w-[85%] sm:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
@@ -309,74 +351,21 @@ export default function ChatViewport({
                 </span>
               </div>
             );
-          })}
-        </div>
+          }}
+        />
 
-        {/* Virtual spacer below visible window */}
-        {bottomSpacerHeight > 0 && (
-          <div
-            style={{ height: `${bottomSpacerHeight}px` }}
-            aria-hidden="true"
-          />
+        {/* Floating Scroll to Bottom Button */}
+        {showScrollBottomBtn && (
+          <button
+            onClick={scrollToBottom}
+            aria-label="Scroll to newest messages"
+            className="absolute bottom-4 right-4 sm:right-6 z-30 px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-bottom-2"
+          >
+            <ArrowDown className="w-3.5 h-3.5" />
+            <span>{t.newMessagesBelow}</span>
+          </button>
         )}
-
-        {/* Typing indicator */}
-        {isPartnerTyping && !isPartnerLeft && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 px-1 py-1 mt-2">
-            <span>{t.typing(partnerAlias)}</span>
-            <span className="flex space-x-0.5">
-              <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" />
-              <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce delay-150" />
-              <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce delay-300" />
-            </span>
-          </div>
-        )}
-
-        {/* Stranger disconnected or Connection lost callout */}
-        {isPartnerLeft && (
-          <div className="my-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center max-w-sm mx-auto space-y-3">
-            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 mx-auto flex items-center justify-center">
-              <Slash className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                {leftReason === "disconnected"
-                  ? (lang === "bisaya" ? "Nawad-an og koneksyon" : "Connection lost")
-                  : t.partnerDisconnected(partnerAlias)}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1 leading-normal">
-                {leftReason === "disconnected"
-                  ? t.connectionLostDesc
-                  : leftReason === "skipped"
-                    ? t.partnerSkipped(partnerAlias)
-                    : t.connectionEnded}
-              </p>
-            </div>
-            <button
-              onClick={handleSkip}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center gap-1.5 mx-auto shadow-sm"
-            >
-              <span className="sm:hidden">{lang === "bisaya" ? "Skip / Pangitag Lain" : "Skip Stranger"}</span>
-              <span className="hidden sm:inline">{t.findNewStranger}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
       </div>
-
-      {/* Floating Scroll to Bottom Button (appears when user scrolls up during active chat) */}
-      {showScrollBottomBtn && (
-        <button
-          onClick={() => scrollToBottom(true)}
-          aria-label="Scroll to newest messages"
-          className="absolute bottom-16 sm:bottom-20 right-4 sm:right-6 z-30 px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-bottom-2"
-        >
-          <ArrowDown className="w-3.5 h-3.5" />
-          <span>{t.newMessagesBelow}</span>
-        </button>
-      )}
 
       {/* Input bar - pinned cleanly at the bottom */}
       <div className="p-2.5 sm:p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-20 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
