@@ -49,7 +49,7 @@ app.prepare().then(() => {
   const typingLimiter = new SlidingWindowRateLimiter({ windowMs: 1000, maxRequests: 3 });
   const connectionLimiter = new SlidingWindowRateLimiter({ windowMs: 60000, maxRequests: 30 });
   const temporaryBlocklist = new TemporaryBlocklist();
-  const activeConnectionsPerIp = new Map<string, number>();
+  const activeSocketsPerIp = new Map<string, Set<string>>();
 
   // Connection-level anti-DDoS middleware
   io.use((socket, next) => {
@@ -67,13 +67,12 @@ app.prepare().then(() => {
       return next(new Error("Too many connection attempts. Please slow down."));
     }
 
-    const currentConns = activeConnectionsPerIp.get(clientIp) || 0;
+    const currentConns = activeSocketsPerIp.get(clientIp)?.size || 0;
     if (currentConns >= 8) {
       console.warn(`[RATE LIMIT] Max concurrent connections exceeded for IP: ${clientIp} (${currentConns})`);
       return next(new Error("Too many concurrent chat sessions from this IP."));
     }
 
-    activeConnectionsPerIp.set(clientIp, currentConns + 1);
     next();
   });
 
@@ -82,7 +81,7 @@ app.prepare().then(() => {
   const userProfiles = new Map<string, UserProfile>();
 
   const broadcastOnlineCount = () => {
-    io.emit("online-count", io.engine.clientsCount);
+    io.emit("online-count", io.sockets.sockets.size);
   };
 
   const tryMatchUser = (currentEntry: QueueEntry): boolean => {
@@ -150,6 +149,14 @@ app.prepare().then(() => {
   };
 
   io.on("connection", (socket: Socket) => {
+    const clientIp = getClientIp(socket);
+    let ipSet = activeSocketsPerIp.get(clientIp);
+    if (!ipSet) {
+      ipSet = new Set();
+      activeSocketsPerIp.set(clientIp, ipSet);
+    }
+    ipSet.add(socket.id);
+
     broadcastOnlineCount();
 
     socket.on("join-queue", (profile?: UserProfile) => {
@@ -297,11 +304,12 @@ app.prepare().then(() => {
 
     socket.on("disconnect", () => {
       const clientIp = getClientIp(socket);
-      const conns = activeConnectionsPerIp.get(clientIp) || 1;
-      if (conns <= 1) {
-        activeConnectionsPerIp.delete(clientIp);
-      } else {
-        activeConnectionsPerIp.set(clientIp, conns - 1);
+      const ipSet = activeSocketsPerIp.get(clientIp);
+      if (ipSet) {
+        ipSet.delete(socket.id);
+        if (ipSet.size === 0) {
+          activeSocketsPerIp.delete(clientIp);
+        }
       }
 
       messageLimiter.reset(socket.id);

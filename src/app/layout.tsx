@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { SocketProvider } from "../context/SocketContext";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://esmiringle.onrender.com";
 
@@ -101,7 +102,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-150">
-        {children}
+        <SocketProvider>{children}</SocketProvider>
       </body>
     </html>
   );

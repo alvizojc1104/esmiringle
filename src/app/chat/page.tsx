@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { UserProfile } from "../../types/chat";
 import { Language } from "../../utils/i18n";
@@ -87,12 +87,26 @@ export default function ChatPage() {
     stopChat,
   } = useChatSocket(profile);
 
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
   // Auto-start searching when profile is ready
   useEffect(() => {
     if (profile) {
       startSearching();
     }
   }, [profile, startSearching]);
+
+  // Clean up if component unmounts (e.g. back button or direct navigation)
+  useEffect(() => {
+    return () => {
+      if (statusRef.current === "matched") {
+        stopChat();
+      } else {
+        cancelSearching();
+      }
+    };
+  }, [stopChat, cancelSearching]);
 
   const handleCancel = () => {
     cancelSearching();
