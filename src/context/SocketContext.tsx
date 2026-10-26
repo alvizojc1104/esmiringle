@@ -33,17 +33,26 @@ export interface SocketContextValue {
 
 const SocketContext = createContext<SocketContextValue | null>(null);
 
-function getSessionId(): string {
+function getDeviceId(): string {
   if (typeof window === "undefined") return "";
   try {
-    let sid = sessionStorage.getItem("esmeringle_sid");
-    if (!sid) {
-      sid = `s_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
-      sessionStorage.setItem("esmeringle_sid", sid);
+    let did = localStorage.getItem("esmeringle_did");
+    if (!did) {
+      did = `d_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 10)}`;
+      localStorage.setItem("esmeringle_did", did);
     }
-    return sid;
+    return did;
   } catch {
-    return "";
+    try {
+      let sid = sessionStorage.getItem("esmeringle_did");
+      if (!sid) {
+        sid = `d_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 10)}`;
+        sessionStorage.setItem("esmeringle_did", sid);
+      }
+      return sid;
+    } catch {
+      return "";
+    }
   }
 }
 
@@ -82,7 +91,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
     const socket = io(socketUrl, {
-      auth: { sessionId: getSessionId() },
+      auth: {
+        deviceId: getDeviceId(),
+        sessionId: getDeviceId(),
+      },
       transports: ["websocket", "polling"],
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -189,28 +201,39 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       ]);
     });
 
-    // Handle mobile phone unlock & tab focus (visibilitychange)
+    // Handle mobile phone lock, backgrounding, tab switch, and browser exit
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        console.log("[SOCKET] Page became visible, socket connected:", socket.connected);
-        if (!socket.connected) {
-          setConnectionStatus("reconnecting");
-          if (statusRef.current === "matched") {
-            setIsPartnerLeft(true);
-            setLeftReason("disconnected");
-            sound.playDisconnectSound();
-          }
-          socket.connect();
-        } else if (statusRef.current === "matched" && !isPartnerLeftRef.current) {
-          socket.emit("check-match", (res: { active: boolean }) => {
-            if (!res?.active) {
-              setIsPartnerLeft(true);
-              setLeftReason("disconnected");
-              sound.playDisconnectSound();
-            }
-          });
+      if (document.visibilityState === "hidden") {
+        console.log("[SOCKET] App hidden or mobile backgrounded");
+        // If searching in queue, leave immediately so we don't get matched into a ghost room
+        if (statusRef.current === "searching") {
+          socket.emit("leave-queue");
+          setStatus("idle");
         }
+        // Explicitly disconnect to ensure server knows we are not active and save mobile battery
+        socket.disconnect();
+        setConnectionStatus("disconnected");
+      } else if (document.visibilityState === "visible") {
+        console.log("[SOCKET] App became visible on mobile, reconnecting");
+        setConnectionStatus("reconnecting");
+        if (statusRef.current === "matched") {
+          setIsPartnerLeft(true);
+          setLeftReason("disconnected");
+          sound.playDisconnectSound();
+        }
+        socket.connect();
       }
+    };
+
+    // Handle mobile browser exit, tab close, or navigation away (pagehide is the modern standard for iOS & Android)
+    const handlePageExit = () => {
+      console.log("[SOCKET] Mobile pagehide/unload event fired");
+      if (statusRef.current === "searching") {
+        socket.emit("leave-queue");
+      } else if (statusRef.current === "matched") {
+        socket.emit("skip-partner");
+      }
+      socket.disconnect();
     };
 
     const handleOffline = () => {
@@ -228,11 +251,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageExit);
+    window.addEventListener("beforeunload", handlePageExit);
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageExit);
+      window.removeEventListener("beforeunload", handlePageExit);
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
       socket.disconnect();

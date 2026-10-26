@@ -60,8 +60,9 @@ app.prepare().then(() => {
     },
     // Max payload size to protect against memory exhaustion
     maxHttpBufferSize: 1e6, // 1MB
-    pingTimeout: 20000,
-    pingInterval: 10000,
+    // Reduced ping timeout & interval so dead mobile connections are evicted quickly
+    pingTimeout: 10000,
+    pingInterval: 5000,
   });
 
   // Anti-DDoS Rate Limiters
@@ -172,11 +173,29 @@ app.prepare().then(() => {
   };
 
   io.on("connection", (socket: Socket) => {
-    const sessionId = (socket.handshake.auth?.sessionId as string) || socket.id;
-    let sSockets = activeSessions.get(sessionId);
+    const deviceId =
+      (socket.handshake.auth?.deviceId as string) ||
+      (socket.handshake.auth?.sessionId as string) ||
+      socket.id;
+
+    // Immediately terminate any stale ghost sockets from the same device
+    const existingSockets = activeSessions.get(deviceId);
+    if (existingSockets && existingSockets.size > 0) {
+      existingSockets.forEach((staleSocketId) => {
+        if (staleSocketId !== socket.id) {
+          const staleSocket = io.sockets.sockets.get(staleSocketId);
+          if (staleSocket) {
+            console.log(`[DEVICE] Purging stale socket ${staleSocketId} for device ${deviceId}`);
+            staleSocket.disconnect(true);
+          }
+        }
+      });
+    }
+
+    let sSockets = activeSessions.get(deviceId);
     if (!sSockets) {
       sSockets = new Set();
-      activeSessions.set(sessionId, sSockets);
+      activeSessions.set(deviceId, sSockets);
     }
     sSockets.add(socket.id);
 
@@ -337,12 +356,15 @@ app.prepare().then(() => {
     });
 
     socket.on("disconnect", () => {
-      const sessionId = (socket.handshake.auth?.sessionId as string) || socket.id;
-      const sSockets = activeSessions.get(sessionId);
+      const deviceId =
+        (socket.handshake.auth?.deviceId as string) ||
+        (socket.handshake.auth?.sessionId as string) ||
+        socket.id;
+      const sSockets = activeSessions.get(deviceId);
       if (sSockets) {
         sSockets.delete(socket.id);
         if (sSockets.size === 0) {
-          activeSessions.delete(sessionId);
+          activeSessions.delete(deviceId);
         }
       }
 
