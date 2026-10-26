@@ -41,6 +41,12 @@ export interface Translations {
   notePrivacy: string;
   notFoundTitle: string;
   notFoundButton: string;
+  charLimitTitle: string;
+  charLimitDesc: (count: number, max: number) => string;
+  charLimitTrimBtn: string;
+  charLimitEditBtn: string;
+  charLimitBadge: (over: number) => string;
+  newMessagesBelow: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -90,6 +96,13 @@ export const translations: Record<Language, Translations> = {
       "Protect your privacy: Never share real names, passwords, phone numbers, or social accounts.",
     notFoundTitle: "no esmiringhoy found here",
     notFoundButton: "Go Back Home",
+    charLimitTitle: "Message Too Long",
+    charLimitDesc: (count, max) =>
+      `Chats are limited to ${max.toLocaleString()} characters. Your current message has ${count.toLocaleString()} characters.`,
+    charLimitTrimBtn: "Trim to 1,000 Characters",
+    charLimitEditBtn: "Edit Message",
+    charLimitBadge: (over) => `+${over.toLocaleString()} characters over limit`,
+    newMessagesBelow: "New messages below",
   },
   bisaya: {
     appName: "esmiringle",
@@ -138,5 +151,12 @@ export const translations: Record<Language, Translations> = {
       "Ampingi imong privacy: Ayaw ihatag imong password, phone number, o personal accounts.",
     notFoundTitle: "hoy, walay nag esmiringhoy diri",
     notFoundButton: "Balik sa Home",
+    charLimitTitle: "Nisobra ang Imong Mensahe",
+    charLimitDesc: (count, max) =>
+      `Kutob ra sa ${max.toLocaleString()} ka letra matag chat. Ang imong gisulat niabot na og ${count.toLocaleString()} ka letra.`,
+    charLimitTrimBtn: "Putla sa 1,000 ka Letra",
+    charLimitEditBtn: "Usba ang Mensahe",
+    charLimitBadge: (over) => `+${over.toLocaleString()} ka letra nisobra sa limit`,
+    newMessagesBelow: "Bag-ong mga mensahe sa ubos",
   },
 };

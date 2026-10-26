@@ -14,11 +14,14 @@ import {
   Slash,
   ArrowRight,
   ArrowLeft,
+  ArrowDown,
   Globe,
   Sun,
   Moon,
 } from "lucide-react";
 import { sound } from "../utils/audio";
+import { useVirtualizedChat } from "../hooks/useVirtualizedChat";
+import CharLimitModal from "./CharLimitModal";
 
 interface ChatViewportProps {
   userProfile: UserProfile;
@@ -39,13 +42,16 @@ interface ChatViewportProps {
   isDarkMode?: boolean;
 }
 
+const MAX_CHAR_LIMIT = 1000;
+
 export default function ChatViewport({
+  userProfile,
   partner,
   messages,
   isPartnerTyping,
   isPartnerLeft,
   leftReason,
-  connectionStatus = "connected",
+  connectionStatus,
   onSendMessage,
   onTyping,
   onSkip,
@@ -63,8 +69,9 @@ export default function ChatViewport({
       onNext();
     }
   }, [onSkip, onNext]);
+
   const [inputText, setInputText] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isCharLimitModalOpen, setIsCharLimitModalOpen] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,10 +79,25 @@ export default function ChatViewport({
   const partnerAlias = GENDER_ALIASES[partner.gender] || "Stranger";
   const article = partner.gender === "male" ? "a" : "an";
 
-  // Scroll to bottom on new messages
+  // Virtualized chat scroll engine
+  const {
+    containerRef,
+    messagesEndRef,
+    visibleMessages,
+    topSpacerHeight,
+    bottomSpacerHeight,
+    measureItem,
+    handleScroll,
+    scrollToBottom,
+    showScrollBottomBtn,
+  } = useVirtualizedChat({ messages });
+
+  // Scroll to bottom when partner types or disconnects
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isPartnerTyping, isPartnerLeft]);
+    if (isPartnerTyping || isPartnerLeft) {
+      scrollToBottom(true);
+    }
+  }, [isPartnerTyping, isPartnerLeft, scrollToBottom]);
 
   // Focus input
   useEffect(() => {
@@ -110,6 +132,12 @@ export default function ChatViewport({
     e.preventDefault();
     if (!inputText.trim() || isPartnerLeft) return;
 
+    // Check if character limit is exceeded
+    if (inputText.length > MAX_CHAR_LIMIT) {
+      setIsCharLimitModalOpen(true);
+      return;
+    }
+
     onSendMessage(inputText.trim());
     setInputText("");
     onTyping(false);
@@ -117,8 +145,14 @@ export default function ChatViewport({
     sound.playMessageSound();
   };
 
+  const handleTrimMessage = () => {
+    setInputText((prev) => prev.slice(0, MAX_CHAR_LIMIT));
+    setIsCharLimitModalOpen(false);
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="flex flex-col h-full sm:h-[calc(100vh-4rem)] max-w-3xl mx-auto w-full sm:rounded-2xl bg-white dark:bg-slate-900 sm:border sm:border-slate-200 sm:dark:border-slate-800 sm:shadow-sm overflow-hidden transition-colors">
+    <div className="flex flex-col h-full sm:h-[calc(100vh-4rem)] max-w-3xl mx-auto w-full sm:rounded-2xl bg-white dark:bg-slate-900 sm:border sm:border-slate-200 sm:dark:border-slate-800 sm:shadow-sm overflow-hidden transition-colors relative">
       {/* Messenger-style Top Header - Fixed & Pinned */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0 select-none">
         {/* Left: Back Button + Avatar + Alias */}
@@ -207,62 +241,88 @@ export default function ChatViewport({
         </div>
       </div>
 
-      {/* Messages Scroll Area - ONLY this element scrolls */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3.5">
+      {/* Virtualized Messages Scroll Area */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 relative"
+      >
+        {/* Welcome banner at top */}
         <div className="text-center my-2">
           <span className="inline-block px-3 py-1 rounded-full text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             {t.welcomeChat(partnerAlias, article)}
           </span>
         </div>
 
-        {messages.map((msg) => {
-          if (msg.senderType === "system") {
-            const isWarning = msg.text.startsWith("⚠️");
+        {/* Virtual spacer above visible window */}
+        {topSpacerHeight > 0 && (
+          <div style={{ height: `${topSpacerHeight}px` }} aria-hidden="true" />
+        )}
+
+        {/* Visible Messages */}
+        <div className="space-y-3.5">
+          {visibleMessages.map((msg) => {
+            if (msg.senderType === "system") {
+              const isWarning = msg.text.startsWith("⚠️");
+              return (
+                <div
+                  key={msg.id}
+                  ref={(el) => measureItem(msg.id, el)}
+                  className="text-center my-2"
+                >
+                  <span
+                    className={`inline-block px-3 py-1.5 rounded-full text-xs ${
+                      isWarning
+                        ? "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-medium"
+                        : "text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {msg.text}
+                  </span>
+                </div>
+              );
+            }
+
+            const isYou = msg.senderType === "you";
+            const formattedTime = new Date(msg.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
             return (
-              <div key={msg.id} className="text-center my-2">
-                <span
-                  className={`inline-block px-3 py-1.5 rounded-full text-xs ${
-                    isWarning
-                      ? "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-medium"
-                      : "text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+              <div
+                key={msg.id}
+                ref={(el) => measureItem(msg.id, el)}
+                className={`flex flex-col ${isYou ? "items-end" : "items-start"}`}
+              >
+                <div
+                  className={`max-w-[85%] sm:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    isYou
+                      ? "bg-blue-600 text-white rounded-br-xs shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 rounded-bl-xs"
                   }`}
                 >
-                  {msg.text}
+                  <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                </div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 px-1">
+                  {formattedTime}
                 </span>
               </div>
             );
-          }
+          })}
+        </div>
 
-          const isYou = msg.senderType === "you";
-          const formattedTime = new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-
-          return (
-            <div
-              key={msg.id}
-              className={`flex flex-col ${isYou ? "items-end" : "items-start"}`}
-            >
-              <div
-                className={`max-w-[85%] sm:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  isYou
-                    ? "bg-blue-600 text-white rounded-br-xs shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 rounded-bl-xs"
-                }`}
-              >
-                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-              </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 px-1">
-                {formattedTime}
-              </span>
-            </div>
-          );
-        })}
+        {/* Virtual spacer below visible window */}
+        {bottomSpacerHeight > 0 && (
+          <div
+            style={{ height: `${bottomSpacerHeight}px` }}
+            aria-hidden="true"
+          />
+        )}
 
         {/* Typing indicator */}
         {isPartnerTyping && !isPartnerLeft && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 px-1 py-1">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 px-1 py-1 mt-2">
             <span>{t.typing(partnerAlias)}</span>
             <span className="flex space-x-0.5">
               <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" />
@@ -306,8 +366,37 @@ export default function ChatViewport({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Floating Scroll to Bottom Button (appears when user scrolls up during active chat) */}
+      {showScrollBottomBtn && (
+        <button
+          onClick={() => scrollToBottom(true)}
+          aria-label="Scroll to newest messages"
+          className="absolute bottom-16 sm:bottom-20 right-4 sm:right-6 z-30 px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-bottom-2"
+        >
+          <ArrowDown className="w-3.5 h-3.5" />
+          <span>{t.newMessagesBelow}</span>
+        </button>
+      )}
+
       {/* Input bar - pinned cleanly at the bottom */}
       <div className="p-2.5 sm:p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-20 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {/* Dynamic character counter: appears when approaching or exceeding 1,000 chars */}
+        {inputText.length > 800 && (
+          <div className="flex justify-end px-1 pb-1">
+            <span
+              className={`text-[11px] font-medium transition-colors ${
+                inputText.length > MAX_CHAR_LIMIT
+                  ? "text-rose-600 dark:text-rose-400 font-bold"
+                  : inputText.length > 950
+                    ? "text-amber-600 dark:text-amber-400 font-semibold"
+                    : "text-slate-400"
+              }`}
+            >
+              {inputText.length.toLocaleString()} / {MAX_CHAR_LIMIT.toLocaleString()}
+            </span>
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <button
             type="button"
@@ -340,19 +429,40 @@ export default function ChatViewport({
                       : t.rematchPlaceholder(partnerAlias))
                   : t.typePlaceholder
             }
-            className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition"
+            className={`flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm outline-none disabled:opacity-50 transition ${
+              inputText.length > MAX_CHAR_LIMIT
+                ? "border-rose-500 focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+                : "border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            }`}
           />
 
           <button
             type="submit"
             disabled={!inputText.trim() || isPartnerLeft || connectionStatus !== "connected"}
             aria-label="Send message"
-            className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white transition shadow-sm shrink-0"
+            className={`p-2.5 rounded-xl text-white transition shadow-sm shrink-0 disabled:opacity-40 ${
+              inputText.length > MAX_CHAR_LIMIT
+                ? "bg-rose-600 hover:bg-rose-700"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
             <Send className="w-4 h-4" />
           </button>
         </form>
       </div>
+
+      {/* Character Limit Modal */}
+      <CharLimitModal
+        isOpen={isCharLimitModalOpen}
+        charCount={inputText.length}
+        maxChars={MAX_CHAR_LIMIT}
+        onTrim={handleTrimMessage}
+        onClose={() => {
+          setIsCharLimitModalOpen(false);
+          inputRef.current?.focus();
+        }}
+        lang={lang}
+      />
     </div>
   );
 }
