@@ -16,7 +16,7 @@ export default function HomePage() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [lang, setLang] = useState<Language>("en");
+  const [lang, setLang] = useState<Language>("bisaya");
 
   // Lightweight socket connection on home page just for live online counter
   const { onlineCount } = useChatSocket(null);
@@ -25,14 +25,14 @@ export default function HomePage() {
   useEffect(() => {
     setIsClient(true);
 
-    // Language setup - default to english
+    // Language setup - default to bisaya
     const savedLang = sessionStorage.getItem(
       "esmeringle_lang",
     ) as Language | null;
     if (savedLang === "bisaya" || savedLang === "en") {
       setLang(savedLang);
     } else {
-      setLang("en");
+      setLang("bisaya");
     }
 
     // Theme setup - light is default

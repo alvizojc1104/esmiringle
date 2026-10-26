@@ -7,7 +7,7 @@ import { Language, translations } from "../utils/i18n";
 import { sound } from "../utils/audio";
 
 export default function NotFound() {
-  const [lang, setLang] = useState<Language>("en");
+  const [lang, setLang] = useState<Language>("bisaya");
 
   useEffect(() => {
     const savedLang = sessionStorage.getItem(
@@ -16,7 +16,7 @@ export default function NotFound() {
     if (savedLang === "en" || savedLang === "bisaya") {
       setLang(savedLang);
     } else {
-      setLang("en");
+      setLang("bisaya");
     }
   }, []);
 

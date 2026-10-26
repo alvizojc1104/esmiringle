@@ -13,18 +13,18 @@ export default function ChatPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [lang, setLang] = useState<Language>("en");
+  const [lang, setLang] = useState<Language>("bisaya");
 
   // Load profile and preferences on mount
   useEffect(() => {
     setIsClient(true);
 
-    // Language setup - default to english
+    // Language setup - default to bisaya
     const savedLang = sessionStorage.getItem("esmeringle_lang") as Language | null;
     if (savedLang === "bisaya" || savedLang === "en") {
       setLang(savedLang);
     } else {
-      setLang("en");
+      setLang("bisaya");
     }
 
     // Theme setup - light is default

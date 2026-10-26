@@ -19,7 +19,7 @@ export default function CharLimitModal({
   maxChars = 1000,
   onTrim,
   onClose,
-  lang = "en",
+  lang = "bisaya",
 }: CharLimitModalProps) {
   const t = translations[lang];
 

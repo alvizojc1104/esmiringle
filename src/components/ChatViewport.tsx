@@ -57,7 +57,7 @@ export default function ChatViewport({
   onSkip,
   onNext,
   onStop,
-  lang = "en",
+  lang = "bisaya",
   onToggleLang,
   onToggleTheme,
   isDarkMode,

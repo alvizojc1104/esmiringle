@@ -12,7 +12,7 @@ interface MatchmakingRadarProps {
   lang?: Language;
 }
 
-export default function MatchmakingRadar({ profile, onlineCount, onCancel, lang = "en" }: MatchmakingRadarProps) {
+export default function MatchmakingRadar({ profile, onlineCount, onCancel, lang = "bisaya" }: MatchmakingRadarProps) {
   const t = translations[lang];
 
   // ESC to cancel

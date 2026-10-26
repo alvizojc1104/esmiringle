@@ -11,7 +11,7 @@ interface OnboardingModalProps {
   lang?: Language;
 }
 
-export default function OnboardingModal({ isOpen, onSave, onClose, lang = "en" }: OnboardingModalProps) {
+export default function OnboardingModal({ isOpen, onSave, onClose, lang = "bisaya" }: OnboardingModalProps) {
   if (!isOpen) return null;
   const t = translations[lang];
 
