@@ -7,6 +7,14 @@ import {
   TemporaryBlocklist,
   getClientIp,
 } from "./src/server/rateLimiter";
+import {
+  parseUserAgent,
+  ActiveUserSession,
+  ActivityEvent,
+  ActivityType,
+  DashboardStats,
+  UserStatus,
+} from "./src/utils/userTracker";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -42,6 +50,14 @@ app.prepare().then(() => {
             service: "esmeringle",
           })
         );
+        return;
+      }
+
+      if (parsedUrl === "/api/dashboard/stats" || parsedUrl === "/api/admin/metrics") {
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.statusCode = 200;
+        res.end(JSON.stringify(getDashboardStats()));
         return;
       }
 
@@ -108,6 +124,124 @@ app.prepare().then(() => {
     io.emit("online-count", count);
   };
 
+  // In-memory User Activity and Metrics tracking for Dashboard
+  const serverStartTime = Date.now();
+  const totalUniqueDevices = new Set<string>();
+  const activeUsersMap = new Map<string, ActiveUserSession>();
+  const recentActivities: ActivityEvent[] = [];
+  const MAX_ACTIVITIES = 150;
+
+  const recordActivity = (
+    type: ActivityType,
+    socket: Socket,
+    details: string,
+    gender?: string,
+    forcedStatus?: UserStatus
+  ) => {
+    const rawDeviceId =
+      (socket.handshake.auth?.deviceId as string) ||
+      (socket.handshake.auth?.sessionId as string) ||
+      socket.id;
+    const userAgent = (socket.handshake.headers["user-agent"] as string) || "Unknown";
+    const parsed = parseUserAgent(userAgent);
+    const deviceSnippet =
+      rawDeviceId.length > 8
+        ? `${rawDeviceId.slice(0, 4)}...${rawDeviceId.slice(-4)}`
+        : rawDeviceId;
+
+    totalUniqueDevices.add(rawDeviceId);
+
+    let status: UserStatus = forcedStatus || "idle";
+    if (!forcedStatus) {
+      if (activeRooms.has(socket.id)) {
+        status = "in_chat";
+      } else if (waitingQueue.some((q) => q.socketId === socket.id)) {
+        status = "in_queue";
+      } else {
+        status = "idle";
+      }
+    }
+
+    if (type === "disconnected") {
+      activeUsersMap.delete(socket.id);
+    } else {
+      activeUsersMap.set(socket.id, {
+        deviceId: rawDeviceId,
+        socketId: socket.id,
+        deviceSnippet,
+        status,
+        connectedAt: activeUsersMap.get(socket.id)?.connectedAt || Date.now(),
+        lastActivityAt: Date.now(),
+        userAgent,
+        deviceType: parsed.deviceType,
+        os: parsed.os,
+        browser: parsed.browser,
+        gender: gender || activeUsersMap.get(socket.id)?.gender,
+      });
+    }
+
+    const event: ActivityEvent = {
+      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: Date.now(),
+      type,
+      deviceId: rawDeviceId,
+      deviceSnippet,
+      deviceType: parsed.deviceType,
+      os: parsed.os,
+      browser: parsed.browser,
+      userAgent,
+      details,
+    };
+
+    recentActivities.unshift(event);
+    if (recentActivities.length > MAX_ACTIVITIES) {
+      recentActivities.pop();
+    }
+  };
+
+  const getDashboardStats = (): DashboardStats => {
+    const onlineCount = activeSessions.size > 0 ? activeSessions.size : io.sockets.sockets.size;
+    const queueCount = waitingQueue.length;
+    const inChatCount = activeRooms.size;
+    const activeRoomsCount = Math.floor(activeRooms.size / 2);
+
+    const deviceTypes: Record<string, number> = { mobile: 0, desktop: 0, tablet: 0, bot: 0 };
+    const os: Record<string, number> = {};
+    const browsers: Record<string, number> = {};
+
+    activeUsersMap.forEach((user) => {
+      deviceTypes[user.deviceType] = (deviceTypes[user.deviceType] || 0) + 1;
+      os[user.os] = (os[user.os] || 0) + 1;
+      browsers[user.browser] = (browsers[user.browser] || 0) + 1;
+    });
+
+    return {
+      onlineCount,
+      queueCount,
+      activeRoomsCount,
+      inChatCount,
+      totalUniqueDevices: totalUniqueDevices.size,
+      serverUptimeSeconds: Math.floor((Date.now() - serverStartTime) / 1000),
+      serverStartTime,
+      breakdown: {
+        deviceTypes,
+        os,
+        browsers,
+      },
+      activeUsers: Array.from(activeUsersMap.values()).map((u) => ({
+        ...u,
+        status: activeRooms.has(u.socketId)
+          ? "in_chat"
+          : waitingQueue.some((q) => q.socketId === u.socketId)
+          ? "in_queue"
+          : "idle",
+      })),
+      recentActivities: recentActivities.slice(0, 50),
+    };
+  };
+
+  (globalThis as any).__getDashboardStats = getDashboardStats;
+
   const tryMatchUser = (currentEntry: QueueEntry): boolean => {
     // Find candidate in queue
     let candidateIndex = -1;
@@ -165,6 +299,9 @@ app.prepare().then(() => {
         roomId,
       });
 
+      recordActivity("matched", socketA, `Matched into room ${roomId}`, undefined, "in_chat");
+      recordActivity("matched", socketB, `Matched into room ${roomId}`, undefined, "in_chat");
+
       console.log(`[MATCH] Room ${roomId} matched`);
       return true;
     }
@@ -207,6 +344,7 @@ app.prepare().then(() => {
     }
     ipSet.add(socket.id);
 
+    recordActivity("connected", socket, "Connected to esmeringle", undefined, "idle");
     broadcastOnlineCount();
 
     socket.on("join-queue", (profile?: UserProfile) => {
@@ -243,6 +381,13 @@ app.prepare().then(() => {
       if (!matched) {
         waitingQueue.push(queueEntry);
         socket.emit("queue-status", { status: "waiting" });
+        recordActivity(
+          "joined-queue",
+          socket,
+          `Looking for a match (alias: ${userProfile.gender})`,
+          userProfile.gender,
+          "in_queue"
+        );
       }
     });
 
@@ -252,6 +397,7 @@ app.prepare().then(() => {
         waitingQueue.splice(idx, 1);
       }
       socket.emit("queue-status", { status: "idle" });
+      recordActivity("left-queue", socket, "Left matchmaking queue", undefined, "idle");
     });
 
     socket.on("check-match", (callback?: (res: { active: boolean }) => void) => {
@@ -338,8 +484,10 @@ app.prepare().then(() => {
         if (partnerSocket) {
           partnerSocket.emit("partner-left", { reason: "skipped" });
           activeRooms.delete(room.partnerSocketId);
+          recordActivity("skipped", partnerSocket, "Partner skipped to next person", undefined, "idle");
         }
         activeRooms.delete(socket.id);
+        recordActivity("skipped", socket, "Skipped active chat partner", undefined, "idle");
       }
     });
 
@@ -356,6 +504,8 @@ app.prepare().then(() => {
     });
 
     socket.on("disconnect", () => {
+      recordActivity("disconnected", socket, "Disconnected from server");
+
       const deviceId =
         (socket.handshake.auth?.deviceId as string) ||
         (socket.handshake.auth?.sessionId as string) ||
