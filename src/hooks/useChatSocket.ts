@@ -11,20 +11,24 @@ export function useChatSocket(profile: UserProfile | null) {
   const profileRef = useRef(profile);
   profileRef.current = profile;
 
+  // Extract stable action functions to avoid re-triggering callbacks on state changes
+  const contextStartSearching = context.startSearching;
+  const contextSkipPartner = context.skipPartner;
+
   const startSearching = useCallback(
     (overrideProfile?: UserProfile | null) => {
       const p = overrideProfile || profileRef.current;
-      context.startSearching(p);
+      contextStartSearching(p);
     },
-    [context]
+    [contextStartSearching]
   );
 
   const skipPartner = useCallback(
     (overrideProfile?: UserProfile | null) => {
       const p = overrideProfile || profileRef.current;
-      context.skipPartner(p);
+      contextSkipPartner(p);
     },
-    [context]
+    [contextSkipPartner]
   );
 
   return {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { io, Socket } from "socket.io-client";
 import {
   ChatMessage,
@@ -271,24 +271,43 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     socketRef.current.emit("report-partner", reason);
   }, []);
 
-  const value: SocketContextValue = {
-    socket: socketRef.current,
-    onlineCount,
-    status,
-    connectionStatus,
-    partner,
-    messages,
-    isPartnerTyping,
-    isPartnerLeft,
-    leftReason,
-    startSearching,
-    cancelSearching,
-    sendMessage,
-    sendTyping,
-    skipPartner,
-    stopChat,
-    reportPartner,
-  };
+  const value = useMemo<SocketContextValue>(
+    () => ({
+      socket: socketRef.current,
+      onlineCount,
+      status,
+      connectionStatus,
+      partner,
+      messages,
+      isPartnerTyping,
+      isPartnerLeft,
+      leftReason,
+      startSearching,
+      cancelSearching,
+      sendMessage,
+      sendTyping,
+      skipPartner,
+      stopChat,
+      reportPartner,
+    }),
+    [
+      onlineCount,
+      status,
+      connectionStatus,
+      partner,
+      messages,
+      isPartnerTyping,
+      isPartnerLeft,
+      leftReason,
+      startSearching,
+      cancelSearching,
+      sendMessage,
+      sendTyping,
+      skipPartner,
+      stopChat,
+      reportPartner,
+    ]
+  );
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 }

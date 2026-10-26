@@ -89,24 +89,30 @@ export default function ChatPage() {
 
   const statusRef = useRef(status);
   statusRef.current = status;
+  const hasStartedRef = useRef(false);
+  const stopChatRef = useRef(stopChat);
+  stopChatRef.current = stopChat;
+  const cancelSearchingRef = useRef(cancelSearching);
+  cancelSearchingRef.current = cancelSearching;
 
-  // Auto-start searching when profile is ready
+  // Auto-start searching once when profile is ready
   useEffect(() => {
-    if (profile) {
+    if (profile && !hasStartedRef.current) {
+      hasStartedRef.current = true;
       startSearching();
     }
   }, [profile, startSearching]);
 
-  // Clean up if component unmounts (e.g. back button or direct navigation)
+  // Clean up ONLY when component actually unmounts (e.g. back button or direct navigation)
   useEffect(() => {
     return () => {
       if (statusRef.current === "matched") {
-        stopChat();
+        stopChatRef.current();
       } else {
-        cancelSearching();
+        cancelSearchingRef.current();
       }
     };
-  }, [stopChat, cancelSearching]);
+  }, []);
 
   const handleCancel = () => {
     cancelSearching();
