@@ -24,6 +24,27 @@ interface ActiveRoom {
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     try {
+      // Lightweight keep-alive & health check endpoints for external cron-jobs (e.g. cron-job.org)
+      // Returns immediate HTTP 200 without touching Socket.IO, Next.js SSR, or online user counts
+      const parsedUrl = req.url?.split("?")[0];
+      if (parsedUrl === "/health" || parsedUrl === "/api/health" || parsedUrl === "/ping") {
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.statusCode = 200;
+        if (req.method === "HEAD") {
+          res.end();
+          return;
+        }
+        res.end(
+          JSON.stringify({
+            status: "ok",
+            timestamp: Date.now(),
+            service: "esmeringle",
+          })
+        );
+        return;
+      }
+
       await handle(req, res);
     } catch (err) {
       console.error("Error handling request", err);
@@ -49,6 +70,7 @@ app.prepare().then(() => {
   const typingLimiter = new SlidingWindowRateLimiter({ windowMs: 1000, maxRequests: 3 });
   const connectionLimiter = new SlidingWindowRateLimiter({ windowMs: 60000, maxRequests: 30 });
   const temporaryBlocklist = new TemporaryBlocklist();
+  const activeSessions = new Map<string, Set<string>>();
   const activeSocketsPerIp = new Map<string, Set<string>>();
 
   // Connection-level anti-DDoS middleware
@@ -81,7 +103,8 @@ app.prepare().then(() => {
   const userProfiles = new Map<string, UserProfile>();
 
   const broadcastOnlineCount = () => {
-    io.emit("online-count", io.sockets.sockets.size);
+    const count = activeSessions.size > 0 ? activeSessions.size : io.sockets.sockets.size;
+    io.emit("online-count", count);
   };
 
   const tryMatchUser = (currentEntry: QueueEntry): boolean => {
@@ -149,6 +172,14 @@ app.prepare().then(() => {
   };
 
   io.on("connection", (socket: Socket) => {
+    const sessionId = (socket.handshake.auth?.sessionId as string) || socket.id;
+    let sSockets = activeSessions.get(sessionId);
+    if (!sSockets) {
+      sSockets = new Set();
+      activeSessions.set(sessionId, sSockets);
+    }
+    sSockets.add(socket.id);
+
     const clientIp = getClientIp(socket);
     let ipSet = activeSocketsPerIp.get(clientIp);
     if (!ipSet) {
@@ -303,6 +334,15 @@ app.prepare().then(() => {
     });
 
     socket.on("disconnect", () => {
+      const sessionId = (socket.handshake.auth?.sessionId as string) || socket.id;
+      const sSockets = activeSessions.get(sessionId);
+      if (sSockets) {
+        sSockets.delete(socket.id);
+        if (sSockets.size === 0) {
+          activeSessions.delete(sessionId);
+        }
+      }
+
       const clientIp = getClientIp(socket);
       const ipSet = activeSocketsPerIp.get(clientIp);
       if (ipSet) {

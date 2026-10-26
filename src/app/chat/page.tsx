@@ -99,16 +99,16 @@ export default function ChatPage() {
   useEffect(() => {
     if (profile && !hasStartedRef.current) {
       hasStartedRef.current = true;
-      startSearching();
+      startSearching(profile);
     }
   }, [profile, startSearching]);
 
-  // Clean up ONLY when component actually unmounts (e.g. back button or direct navigation)
+  // Clean up if component unmounts (e.g. back button or direct navigation)
   useEffect(() => {
     return () => {
       if (statusRef.current === "matched") {
         stopChatRef.current();
-      } else {
+      } else if (statusRef.current === "searching") {
         cancelSearchingRef.current();
       }
     };

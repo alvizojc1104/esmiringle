@@ -2,19 +2,18 @@
 
 import { useRef, useCallback } from "react";
 import { UserProfile } from "../types/chat";
-import { useSocket, ConnectionStatus } from "../context/SocketContext";
-
-export type { ConnectionStatus };
+import { useSocket } from "../context/SocketContext";
 
 export function useChatSocket(profile: UserProfile | null) {
   const context = useSocket();
   const profileRef = useRef(profile);
   profileRef.current = profile;
 
-  // Extract stable action functions to avoid re-triggering callbacks on state changes
+  // Extract stable action functions directly from context
   const contextStartSearching = context.startSearching;
   const contextSkipPartner = context.skipPartner;
 
+  // Wrap with memoized callbacks that are completely stable across re-renders
   const startSearching = useCallback(
     (overrideProfile?: UserProfile | null) => {
       const p = overrideProfile || profileRef.current;

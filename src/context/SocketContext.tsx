@@ -33,6 +33,20 @@ export interface SocketContextValue {
 
 const SocketContext = createContext<SocketContextValue | null>(null);
 
+function getSessionId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let sid = sessionStorage.getItem("esmeringle_sid");
+    if (!sid) {
+      sid = `s_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+      sessionStorage.setItem("esmeringle_sid", sid);
+    }
+    return sid;
+  } catch {
+    return "";
+  }
+}
+
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(1);
@@ -44,7 +58,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [isPartnerLeft, setIsPartnerLeft] = useState<boolean>(false);
   const [leftReason, setLeftReason] = useState<"skipped" | "disconnected" | "reported" | null>(null);
 
-  // Keep refs for event callbacks to avoid stale state
+  // Keep refs for event callbacks to avoid stale closures or dependency loops
   const statusRef = useRef(status);
   statusRef.current = status;
   const isPartnerLeftRef = useRef(isPartnerLeft);
@@ -57,6 +71,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
     const socket = io(socketUrl, {
+      auth: { sessionId: getSessionId() },
       transports: ["websocket", "polling"],
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -213,9 +228,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Stable action callbacks with empty dependencies ([]) to prevent infinite re-renders or call depth exceeded
   const startSearching = useCallback((profileToUse?: UserProfile | null) => {
     const prof = profileToUse || activeProfileRef.current;
     if (!socketRef.current || !prof) return;
+    // Guard against duplicate start calls if already searching
+    if (statusRef.current === "searching") return;
+
     activeProfileRef.current = prof;
     setPartner(null);
     setMessages([]);
@@ -228,6 +247,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
   const cancelSearching = useCallback(() => {
     if (!socketRef.current) return;
+    if (statusRef.current === "idle") return;
+
     socketRef.current.emit("leave-queue");
     setStatus("idle");
   }, []);
@@ -251,17 +272,28 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     if (!socketRef.current) return;
     const prof = profileToUse || activeProfileRef.current;
     socketRef.current.emit("skip-partner");
+    setPartner(null);
+    setMessages([]);
+    setIsPartnerLeft(false);
+    setLeftReason(null);
+    setIsPartnerTyping(false);
+
     if (prof) {
-      startSearching(prof);
+      activeProfileRef.current = prof;
+      setStatus("searching");
+      socketRef.current.emit("join-queue", prof);
     } else {
       setStatus("idle");
-      setPartner(null);
     }
-  }, [startSearching]);
+  }, []);
 
   const stopChat = useCallback(() => {
     if (!socketRef.current) return;
-    socketRef.current.emit("skip-partner");
+    if (statusRef.current === "matched") {
+      socketRef.current.emit("skip-partner");
+    } else if (statusRef.current === "searching") {
+      socketRef.current.emit("leave-queue");
+    }
     setPartner(null);
     setStatus("idle");
   }, []);
