@@ -54,6 +54,20 @@ app.prepare().then(() => {
       }
 
       if (parsedUrl === "/api/dashboard/stats" || parsedUrl === "/api/admin/metrics") {
+        const expectedPassword =
+          process.env.DASHBOARD_PASSWORD || process.env.ADMIN_PASSWORD || "125090";
+        const reqUrl = new URL(req.url || "", `http://${req.headers.host || "localhost"}`);
+        const providedKey =
+          (req.headers["x-dashboard-key"] as string) ||
+          reqUrl.searchParams.get("key");
+
+        if (providedKey !== expectedPassword) {
+          res.setHeader("Content-Type", "application/json");
+          res.statusCode = 401;
+          res.end(JSON.stringify({ error: "Unauthorized: Invalid password" }));
+          return;
+        }
+
         res.setHeader("Content-Type", "application/json");
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         res.statusCode = 200;

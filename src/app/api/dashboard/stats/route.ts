@@ -2,7 +2,20 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const expectedPassword =
+    process.env.DASHBOARD_PASSWORD || process.env.ADMIN_PASSWORD || "125090";
+  const url = new URL(req.url);
+  const providedKey =
+    req.headers.get("x-dashboard-key") || url.searchParams.get("key");
+
+  if (providedKey !== expectedPassword) {
+    return NextResponse.json(
+      { error: "Unauthorized: Invalid password" },
+      { status: 401 }
+    );
+  }
+
   if (typeof (globalThis as any).__getDashboardStats === "function") {
     const stats = (globalThis as any).__getDashboardStats();
     return NextResponse.json(stats, {
