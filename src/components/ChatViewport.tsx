@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   ChatMessage,
   PartnerProfile,
@@ -56,7 +56,13 @@ export default function ChatViewport({
   onToggleTheme,
   isDarkMode,
 }: ChatViewportProps) {
-  const handleSkip = onSkip || onNext || (() => {});
+  const handleSkip = useCallback(() => {
+    if (onSkip) {
+      onSkip();
+    } else if (onNext) {
+      onNext();
+    }
+  }, [onSkip, onNext]);
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);

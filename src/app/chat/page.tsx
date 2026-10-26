@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { UserProfile } from "../../types/chat";
 import { Language } from "../../utils/i18n";
@@ -124,6 +124,10 @@ export default function ChatPage() {
     router.push("/");
   };
 
+  const handleSkip = useCallback(() => {
+    skipPartner();
+  }, [skipPartner]);
+
   if (!isClient || !profile) return null;
 
   return (
@@ -145,8 +149,8 @@ export default function ChatPage() {
           connectionStatus={connectionStatus}
           onSendMessage={sendMessage}
           onTyping={sendTyping}
-          onSkip={skipPartner}
-          onNext={skipPartner}
+          onSkip={handleSkip}
+          onNext={handleSkip}
           onStop={handleStop}
           lang={lang}
           onToggleLang={toggleLang}

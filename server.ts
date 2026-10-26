@@ -191,7 +191,10 @@ app.prepare().then(() => {
     broadcastOnlineCount();
 
     socket.on("join-queue", (profile?: UserProfile) => {
-      const userProfile: UserProfile = profile && profile.id ? profile : { id: socket.id, gender: "undisclosed" };
+      const userProfile: UserProfile =
+        profile && typeof profile.id === "string" && typeof profile.gender === "string"
+          ? { id: profile.id.slice(0, 100), gender: profile.gender }
+          : { id: socket.id, gender: "undisclosed" };
       userProfiles.set(socket.id, userProfile);
 
       // Clean up previous queue entries

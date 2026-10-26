@@ -47,6 +47,17 @@ function getSessionId(): string {
   }
 }
 
+function isValidProfile(p: unknown): p is UserProfile {
+  return (
+    !!p &&
+    typeof p === "object" &&
+    "id" in p &&
+    typeof (p as any).id === "string" &&
+    "gender" in p &&
+    typeof (p as any).gender === "string"
+  );
+}
+
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(1);
@@ -229,20 +240,20 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Stable action callbacks with empty dependencies ([]) to prevent infinite re-renders or call depth exceeded
-  const startSearching = useCallback((profileToUse?: UserProfile | null) => {
-    const prof = profileToUse || activeProfileRef.current;
+  const startSearching = useCallback((profileToUse?: unknown) => {
+    const prof = (isValidProfile(profileToUse) ? profileToUse : null) || activeProfileRef.current;
     if (!socketRef.current || !prof) return;
     // Guard against duplicate start calls if already searching
     if (statusRef.current === "searching") return;
 
-    activeProfileRef.current = prof;
+    activeProfileRef.current = { id: prof.id, gender: prof.gender };
     setPartner(null);
     setMessages([]);
     setIsPartnerLeft(false);
     setLeftReason(null);
     setIsPartnerTyping(false);
     setStatus("searching");
-    socketRef.current.emit("join-queue", prof);
+    socketRef.current.emit("join-queue", { id: prof.id, gender: prof.gender });
   }, []);
 
   const cancelSearching = useCallback(() => {
@@ -268,9 +279,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     socketRef.current.emit("typing", isTyping);
   }, []);
 
-  const skipPartner = useCallback((profileToUse?: UserProfile | null) => {
+  const skipPartner = useCallback((profileToUse?: unknown) => {
     if (!socketRef.current) return;
-    const prof = profileToUse || activeProfileRef.current;
+    const prof = (isValidProfile(profileToUse) ? profileToUse : null) || activeProfileRef.current;
     socketRef.current.emit("skip-partner");
     setPartner(null);
     setMessages([]);
@@ -279,9 +290,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     setIsPartnerTyping(false);
 
     if (prof) {
-      activeProfileRef.current = prof;
+      activeProfileRef.current = { id: prof.id, gender: prof.gender };
       setStatus("searching");
-      socketRef.current.emit("join-queue", prof);
+      socketRef.current.emit("join-queue", { id: prof.id, gender: prof.gender });
     } else {
       setStatus("idle");
     }
