@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserProfile, Gender, GENDER_ALIASES } from "../types/chat";
 import { Language, translations } from "../utils/i18n";
@@ -274,6 +275,12 @@ export default function HomePage() {
                 <span>{t.notePrivacy}</span>
               </li>
             </ul>
+            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400">Read guidelines & safety rules:</span>
+              <Link href="/safety" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                Safety Center &rarr;
+              </Link>
+            </div>
           </div>
         </div>
       </main>
@@ -289,9 +296,24 @@ export default function HomePage() {
         lang={lang}
       />
 
-      {/* Watermarked Footer with App Versioning */}
-      <footer className="w-full border-t border-slate-200 dark:border-slate-800 py-3.5 text-center text-xs text-slate-400 dark:text-slate-500">
-        <span>&copy; esmiringle 2026 | quickchow | {APP_VERSION}</span>
+      {/* Watermarked Footer with Legal & App Versioning */}
+      <footer className="w-full border-t border-slate-200 dark:border-slate-800 py-4 px-4 text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <Link href="/safety" className="hover:text-slate-700 dark:hover:text-slate-300 transition underline sm:no-underline">
+            Safety Center
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-slate-700 dark:hover:text-slate-300 transition underline sm:no-underline">
+            Privacy Policy
+          </Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-slate-700 dark:hover:text-slate-300 transition underline sm:no-underline">
+            Terms of Service
+          </Link>
+        </div>
+        <div>
+          <span>&copy; esmiringle 2026 | quickchow | {APP_VERSION}</span>
+        </div>
       </footer>
     </div>
   );

@@ -201,27 +201,49 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       ]);
     });
 
+    let backgroundDisconnectTimer: NodeJS.Timeout | null = null;
+
     // Handle mobile phone lock, backgrounding, tab switch, and browser exit
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        console.log("[SOCKET] App hidden or mobile backgrounded");
+        console.log("[SOCKET] App hidden or backgrounded");
         // If searching in queue, leave immediately so we don't get matched into a ghost room
         if (statusRef.current === "searching") {
           socket.emit("leave-queue");
           setStatus("idle");
+          socket.disconnect();
+          setConnectionStatus("disconnected");
+          return;
         }
-        // Explicitly disconnect to ensure server knows we are not active and save mobile battery
-        socket.disconnect();
-        setConnectionStatus("disconnected");
-      } else if (document.visibilityState === "visible") {
-        console.log("[SOCKET] App became visible on mobile, reconnecting");
-        setConnectionStatus("reconnecting");
+
+        // In a matched room, allow a 25-second grace period for quick tab switches
         if (statusRef.current === "matched") {
-          setIsPartnerLeft(true);
-          setLeftReason("disconnected");
-          sound.playDisconnectSound();
+          if (backgroundDisconnectTimer) clearTimeout(backgroundDisconnectTimer);
+          backgroundDisconnectTimer = setTimeout(() => {
+            console.log("[SOCKET] Background grace period expired; disconnecting");
+            socket.disconnect();
+            setConnectionStatus("disconnected");
+          }, 25000);
+        } else {
+          socket.disconnect();
+          setConnectionStatus("disconnected");
         }
-        socket.connect();
+      } else if (document.visibilityState === "visible") {
+        console.log("[SOCKET] App became visible");
+        if (backgroundDisconnectTimer) {
+          clearTimeout(backgroundDisconnectTimer);
+          backgroundDisconnectTimer = null;
+        }
+
+        if (!socket.connected) {
+          setConnectionStatus("reconnecting");
+          if (statusRef.current === "matched") {
+            setIsPartnerLeft(true);
+            setLeftReason("disconnected");
+            sound.playDisconnectSound();
+          }
+          socket.connect();
+        }
       }
     };
 
@@ -257,6 +279,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("online", handleOnline);
 
     return () => {
+      if (backgroundDisconnectTimer) clearTimeout(backgroundDisconnectTimer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handlePageExit);
       window.removeEventListener("beforeunload", handlePageExit);
