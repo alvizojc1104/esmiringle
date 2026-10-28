@@ -1,4 +1,5 @@
 import { createServer } from "http";
+import crypto from "crypto";
 import next from "next";
 import { Server, Socket } from "socket.io";
 import { UserProfile, QueueEntry } from "./src/types/chat";
@@ -29,6 +30,17 @@ interface ActiveRoom {
   partnerProfile: UserProfile;
 }
 
+function safeComparePassword(provided: string | null | undefined, expected: string): boolean {
+  if (!provided || typeof provided !== "string") return false;
+  const bufProvided = Buffer.from(provided);
+  const bufExpected = Buffer.from(expected);
+  if (bufProvided.length !== bufExpected.length) {
+    crypto.timingSafeEqual(bufExpected, bufExpected);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufProvided, bufExpected);
+}
+
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     try {
@@ -55,13 +67,26 @@ app.prepare().then(() => {
 
       if (parsedUrl === "/api/dashboard/stats" || parsedUrl === "/api/admin/metrics") {
         const expectedPassword =
-          process.env.DASHBOARD_PASSWORD || process.env.ADMIN_PASSWORD || "125090";
+          process.env.DASHBOARD_PASSWORD || process.env.ADMIN_PASSWORD;
+
+        if (!expectedPassword) {
+          res.setHeader("Content-Type", "application/json");
+          res.statusCode = 503;
+          res.end(
+            JSON.stringify({
+              error:
+                "Dashboard authentication is not configured on the server. Please set DASHBOARD_PASSWORD in your environment variables.",
+            })
+          );
+          return;
+        }
+
         const reqUrl = new URL(req.url || "", `http://${req.headers.host || "localhost"}`);
         const providedKey =
           (req.headers["x-dashboard-key"] as string) ||
           reqUrl.searchParams.get("key");
 
-        if (providedKey !== expectedPassword) {
+        if (!safeComparePassword(providedKey, expectedPassword)) {
           res.setHeader("Content-Type", "application/json");
           res.statusCode = 401;
           res.end(JSON.stringify({ error: "Unauthorized: Invalid password" }));

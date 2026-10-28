@@ -67,7 +67,19 @@ export default function DashboardPage() {
         if (res.status === 401) {
           setIsAuthenticated(false);
           sessionStorage.removeItem(STORAGE_KEY);
-          setError("Session expired or invalid password. Please unlock again.");
+          setAuthError("Incorrect password. Please try again.");
+          return false;
+        }
+
+        if (res.status === 503) {
+          setIsAuthenticated(false);
+          sessionStorage.removeItem(STORAGE_KEY);
+          const body = await res.json().catch(() => ({}));
+          const msg =
+            body.error ||
+            "Dashboard authentication is not configured. Please set DASHBOARD_PASSWORD in your environment variables.";
+          setError(msg);
+          setAuthError(msg);
           return false;
         }
 
@@ -282,7 +294,7 @@ export default function DashboardPage() {
                 type={showPassword ? "text" : "password"}
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="Enter password (e.g. 125090)"
+                placeholder="Enter dashboard password"
                 autoFocus
                 className="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
               />

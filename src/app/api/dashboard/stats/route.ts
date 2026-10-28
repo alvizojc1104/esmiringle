@@ -1,15 +1,38 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
+function safeComparePassword(provided: string | null | undefined, expected: string): boolean {
+  if (!provided || typeof provided !== "string") return false;
+  const bufProvided = Buffer.from(provided);
+  const bufExpected = Buffer.from(expected);
+  if (bufProvided.length !== bufExpected.length) {
+    crypto.timingSafeEqual(bufExpected, bufExpected);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufProvided, bufExpected);
+}
+
 export async function GET(req: Request) {
   const expectedPassword =
-    process.env.DASHBOARD_PASSWORD || process.env.ADMIN_PASSWORD || "125090";
+    process.env.DASHBOARD_PASSWORD || process.env.ADMIN_PASSWORD;
+
+  if (!expectedPassword) {
+    return NextResponse.json(
+      {
+        error:
+          "Dashboard authentication is not configured on the server. Please set DASHBOARD_PASSWORD in your environment variables.",
+      },
+      { status: 503 }
+    );
+  }
+
   const url = new URL(req.url);
   const providedKey =
     req.headers.get("x-dashboard-key") || url.searchParams.get("key");
 
-  if (providedKey !== expectedPassword) {
+  if (!safeComparePassword(providedKey, expectedPassword)) {
     return NextResponse.json(
       { error: "Unauthorized: Invalid password" },
       { status: 401 }
