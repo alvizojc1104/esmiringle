@@ -85,6 +85,7 @@ export default function ChatPage() {
     sendTyping,
     skipPartner,
     stopChat,
+    reportPartner,
   } = useChatSocket(profile);
 
   const statusRef = useRef(status);
@@ -152,6 +153,7 @@ export default function ChatPage() {
           onSkip={handleSkip}
           onNext={handleSkip}
           onStop={handleStop}
+          onReport={reportPartner}
           lang={lang}
           onToggleLang={toggleLang}
           onToggleTheme={toggleTheme}

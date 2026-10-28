@@ -44,6 +44,11 @@ function safeComparePassword(provided: string | null | undefined, expected: stri
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     try {
+      // Defensive HTTP Security Headers
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("X-Frame-Options", "DENY");
+      res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+
       // Lightweight keep-alive & health check endpoints for external cron-jobs (e.g. cron-job.org)
       // Returns immediate HTTP 200 without touching Socket.IO, Next.js SSR, or online user counts
       const parsedUrl = req.url?.split("?")[0];
@@ -108,10 +113,31 @@ app.prepare().then(() => {
     }
   });
 
+  const allowedOrigins = [
+    "https://esmiringle.mikealvizo.dev",
+    "http://localhost:3000",
+    "http://localhost:3005",
+  ];
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    allowedOrigins.push(process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, ""));
+  }
+
   const io = new Server(httpServer, {
     cors: {
-      origin: "*",
+      origin: (requestOrigin, callback) => {
+        if (!requestOrigin) return callback(null, true);
+        if (
+          dev ||
+          allowedOrigins.includes(requestOrigin) ||
+          requestOrigin.endsWith(".mikealvizo.dev") ||
+          requestOrigin.includes("localhost")
+        ) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      },
       methods: ["GET", "POST"],
+      credentials: true,
     },
     // Max payload size to protect against memory exhaustion
     maxHttpBufferSize: 1e6, // 1MB
@@ -128,6 +154,8 @@ app.prepare().then(() => {
   const temporaryBlocklist = new TemporaryBlocklist();
   const activeSessions = new Map<string, Set<string>>();
   const activeSocketsPerIp = new Map<string, Set<string>>();
+  // In-memory moderation strike tracker (3 strikes within 15m = 15m block)
+  const reportStrikesPerIp = new Map<string, { count: number; lastReportAt: number }>();
 
   // Connection-level anti-DDoS middleware
   io.use((socket, next) => {
@@ -530,15 +558,42 @@ app.prepare().then(() => {
       }
     });
 
-    socket.on("report-partner", (reason: string) => {
+    socket.on("report-partner", (reason?: string) => {
       const room = activeRooms.get(socket.id);
       if (room) {
         const partnerSocket = io.sockets.sockets.get(room.partnerSocketId);
         if (partnerSocket) {
-          partnerSocket.emit("partner-left", { reason: "reported" });
+          const partnerIp = getClientIp(partnerSocket);
+          const now = Date.now();
+          const existing = reportStrikesPerIp.get(partnerIp) || { count: 0, lastReportAt: now };
+          if (now - existing.lastReportAt > 15 * 60 * 1000) {
+            existing.count = 0;
+          }
+          existing.count += 1;
+          existing.lastReportAt = now;
+          reportStrikesPerIp.set(partnerIp, existing);
+
+          console.warn(
+            `[SAFETY] Conduct report filed against IP ${partnerIp} (reason: ${reason || "unspecified"}, strikes: ${existing.count})`
+          );
+
+          if (existing.count >= 3) {
+            console.warn(
+              `[SAFETY SHIELD] IP ${partnerIp} reached ${existing.count} reports. Applying 15-minute temporary cooling-off block.`
+            );
+            temporaryBlocklist.block(partnerIp, 15 * 60 * 1000);
+            partnerSocket.emit("rate-limited", {
+              message: "You have been temporarily disconnected due to multiple conduct reports.",
+              retryAfterMs: 15 * 60 * 1000,
+            });
+            partnerSocket.disconnect(true);
+          } else {
+            partnerSocket.emit("partner-left", { reason: "reported" });
+          }
           activeRooms.delete(room.partnerSocketId);
         }
         activeRooms.delete(socket.id);
+        recordActivity("skipped", socket, `Reported partner (${reason || "conduct"})`, undefined, "idle");
       }
     });
 

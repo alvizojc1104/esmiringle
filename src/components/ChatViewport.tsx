@@ -18,6 +18,9 @@ import {
   Globe,
   Sun,
   Moon,
+  MoreVertical,
+  Flag,
+  Shield,
 } from "lucide-react";
 import { sound } from "../utils/audio";
 import CharLimitModal from "./CharLimitModal";
@@ -35,6 +38,7 @@ interface ChatViewportProps {
   onSkip?: () => void;
   onNext?: () => void;
   onStop: () => void;
+  onReport?: (reason: string) => void;
   lang?: Language;
   onToggleLang?: () => void;
   onToggleTheme?: () => void;
@@ -56,6 +60,7 @@ export default function ChatViewport({
   onSkip,
   onNext,
   onStop,
+  onReport,
   lang = "bisaya",
   onToggleLang,
   onToggleTheme,
@@ -73,6 +78,30 @@ export default function ChatViewport({
   const [isConfirmingSkip, setIsConfirmingSkip] = useState(false);
   const [isCharLimitModalOpen, setIsCharLimitModalOpen] = useState(false);
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("inappropriate");
+  const [isReportSubmitted, setIsReportSubmitted] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
+
+  const handleOpenReport = () => {
+    sound.playClickSound();
+    setIsReportModalOpen(true);
+  };
+
+  const handleConfirmReport = () => {
+    sound.playClickSound();
+    if (onReport) {
+      onReport(reportReason);
+    }
+    setIsReportSubmitted(true);
+    setTimeout(() => {
+      setIsReportModalOpen(false);
+      setIsReportSubmitted(false);
+      handleSkip();
+    }, 1200);
+  };
+
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const skipConfirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -283,6 +312,51 @@ export default function ChatViewport({
               )}
             </button>
           )}
+
+          {/* Three Vertical Dots Options Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="More options"
+              title="Options"
+              className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+
+            {isMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg py-1 z-50 text-xs animate-in fade-in zoom-in-95">
+                  {onReport && (
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleOpenReport();
+                      }}
+                      className="w-full flex items-center gap-2 text-left px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition font-medium"
+                    >
+                      <Flag className="w-3.5 h-3.5 shrink-0" />
+                      <span>{lang === "bisaya" ? "I-report ang Ka-chat" : "Report"}</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSafetyModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 w-full text-left px-3.5 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition font-medium"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                    <span>{lang === "bisaya" ? "Mga Giya sa Kaluwasan" : "Safety Guidelines"}</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -494,6 +568,161 @@ export default function ChatViewport({
         }}
         lang={lang}
       />
+
+      {/* Report Partner Modal */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xl text-slate-900 dark:text-slate-100 space-y-4">
+            <div className="text-slate-900 dark:text-slate-100 font-bold text-sm">
+              <span>{lang === "bisaya" ? "I-report Kini nga Ka-chat" : "Report Chat Partner"}</span>
+            </div>
+
+            {isReportSubmitted ? (
+              <div className="py-6 text-center space-y-2">
+                <div className="text-3xl text-emerald-500">✓</div>
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  {lang === "bisaya" ? "Nadawat ang imong report. Nilaktaw na ka sa sunod." : "Report received. Skipping to a new stranger..."}
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {lang === "bisaya"
+                    ? "Pilia ang hinungdan sa imong pag-report. Ang mga abusado nga account awtomatikong i-block sa sistema."
+                    : "Select a reason. Repeatedly reported users are temporarily blocked from connecting."}
+                </p>
+
+                <div className="space-y-2 text-xs">
+                  {[
+                    { id: "inappropriate", label: lang === "bisaya" ? "Bastos o Nudity / Explicit Content" : "Explicit / Inappropriate Content" },
+                    { id: "harassment", label: lang === "bisaya" ? "Pang-harass, Bullying o Panghulga" : "Harassment, Bullying, or Threats" },
+                    { id: "spam", label: lang === "bisaya" ? "Scam, Phishing, o Bot Flooding" : "Scam, Phishing, or Spam Bot" },
+                    { id: "minor", label: lang === "bisaya" ? "Menor de edad (Under 18)" : "Appears to be under 18" },
+                  ].map((option) => (
+                    <label
+                      key={option.id}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition ${
+                        reportReason === option.id
+                          ? "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 font-medium"
+                          : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="reportReason"
+                        value={option.id}
+                        checked={reportReason === option.id}
+                        onChange={() => setReportReason(option.id)}
+                        className="accent-rose-600"
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsReportModalOpen(false)}
+                    className="flex-1 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition"
+                  >
+                    {lang === "bisaya" ? "Kanselahon" : "Cancel"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmReport}
+                    className="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition shadow-xs"
+                  >
+                    {lang === "bisaya" ? "I-sumiter & Skip" : "Report & Skip"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Safety Guidelines Modal */}
+      {isSafetyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl text-slate-900 dark:text-slate-100 space-y-4">
+            <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                {lang === "bisaya" ? "Mga Giya sa Kaluwasan" : "Safety Guidelines"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {lang === "bisaya"
+                  ? "Importante kini nga mga lagda aron luwas ang tanan."
+                  : "Essential rules for maintaining a safe and respectful environment."}
+              </p>
+            </div>
+
+            <div className="space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+              <div>
+                <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                  {lang === "bisaya" ? "1. Ayaw i-share ang Imong Personal nga Impormasyon" : "1. Protect Your Personal Identity"}
+                </p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {lang === "bisaya"
+                    ? "Ayaw gayod paghatag sa imong tinuod nga ngalan, social media accounts, cellphone number, o lokasyon."
+                    : "Never share your full name, social media handles, phone number, address, or workplace."}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                  {lang === "bisaya" ? "2. Respeta ug Maayong pamatasan" : "2. Respect and Civility"}
+                </p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {lang === "bisaya"
+                    ? "Gidili ang pagpang-harass, pagpamalikas, hate speech, bullying, extortion, o bastos nga solicitation."
+                    : "Harassment, threats, bullying, hate speech, and unsolicited sexual content are strictly prohibited."}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                  {lang === "bisaya" ? "3. 18+ Lamang" : "3. 18+ Age Requirement"}
+                </p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {lang === "bisaya"
+                    ? "Kini nga serbisyo para lamang sa mga hamtong nga nag-edad 18 pataas."
+                    : "You must be 18 years or older to participate. Minor exploitation is met with zero tolerance."}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                  {lang === "bisaya" ? "4. Paspas nga Pag-report" : "4. Report Bad Behavior"}
+                </p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {lang === "bisaya"
+                    ? "Gamita ang Report button sa menu kon makasugat ka og abusadong ka-chat. Awtomatiko kining i-block sa sistema."
+                    : "Use the Report button in the options menu to flag offenders. Repeatedly reported IPs are automatically blocked."}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+              <a
+                href="/safety"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+              >
+                {lang === "bisaya" ? "Basaha ang tibuok giya →" : "Read full guidelines →"}
+              </a>
+              <button
+                type="button"
+                onClick={() => setIsSafetyModalOpen(false)}
+                className="py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold transition"
+              >
+                {lang === "bisaya" ? "Nasabtan Nako" : "Got it"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
